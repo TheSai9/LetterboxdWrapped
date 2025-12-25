@@ -3,22 +3,68 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CineWrapped</title>
+    <title>CineWrapped | Bauhaus Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap');
       
       body {
-        font-family: 'Inter', sans-serif;
-        background-color: #020617; /* slate-950 */
-        color: #f8fafc; /* slate-50 */
-        overflow: hidden; /* Prevent scrolling during wrapped view */
+        font-family: 'Outfit', sans-serif;
+        background-color: #F0F0F0;
+        color: #121212;
+        overflow: hidden;
       }
       
-      h1, h2, h3, .cinematic-text {
-        font-family: 'Playfair Display', serif;
+      /* Custom Scrollbar for Bauhaus feel */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #121212;
+        border-left: 2px solid #121212;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #F0C020;
+        border: 2px solid #121212;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #D02020;
+      }
+
+      .bauhaus-text {
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: -0.05em;
       }
     </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              bauhaus: {
+                bg: '#F0F0F0',
+                fg: '#121212',
+                red: '#D02020',
+                blue: '#1040C0',
+                yellow: '#F0C020',
+                black: '#121212',
+                muted: '#E0E0E0',
+              }
+            },
+            boxShadow: {
+              'hard-sm': '4px 4px 0px 0px #121212',
+              'hard-md': '6px 6px 0px 0px #121212',
+              'hard-lg': '8px 8px 0px 0px #121212',
+            },
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
   <script type="importmap">
 {
   "imports": {

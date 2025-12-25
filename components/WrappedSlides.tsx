@@ -1,15 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProcessedStats, PersonaResult } from '../types';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts';
 import { generatePersona } from '../services/geminiService';
-import { Play, Pause, ChevronRight, ChevronLeft, Share2, RotateCcw, Flame, Calendar, Trophy, Clock, Film } from 'lucide-react';
+import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Monitor } from 'lucide-react';
 import CalendarHeatmap from './CalendarHeatmap';
 
 interface WrappedSlidesProps {
   stats: ProcessedStats;
   onReset: () => void;
 }
+
+// Custom Bauhaus Tooltip for Charts
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border-2 border-bauhaus-black shadow-hard-sm p-2">
+        <p className="font-bold text-bauhaus-black text-sm uppercase">{label}</p>
+        <p className="text-bauhaus-red font-black text-lg">
+          {payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -22,7 +37,6 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
   }, [stats]);
 
   useEffect(() => {
-    // Scroll to top on slide change
     if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTo(0, 0);
     }
@@ -31,71 +45,183 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
   const nextSlide = () => setCurrentSlide(prev => Math.min(prev + 1, totalSlides - 1));
   const prevSlide = () => setCurrentSlide(prev => Math.max(prev - 1, 0));
 
-  // Slide Components
+  // --- SLIDE 1: INTRO (Red Background) ---
   const SlideIntro = () => (
-    <div className="flex flex-col items-center justify-center min-h-full py-20 text-center px-4">
+    <div className="flex flex-col items-center justify-center min-h-full py-20 px-4 bg-bauhaus-red text-white relative overflow-hidden">
+      {/* Geometric Decoration */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-bauhaus-black rounded-bl-full"></div>
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-bauhaus-blue rounded-tr-full border-t-4 border-r-4 border-white"></div>
+      
       <motion.div 
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1 }}
-        className="w-full"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="z-10 text-center border-4 border-black bg-white text-bauhaus-black p-8 md:p-16 shadow-hard-lg max-w-2xl w-full"
       >
-        <h2 className="text-xl md:text-2xl font-light text-orange-400 mb-4 tracking-widest uppercase">The Year In Review</h2>
-        <h1 className="text-7xl md:text-9xl font-black text-slate-100 cinematic-text mb-8">{stats.year}</h1>
+        <div className="border-b-4 border-black pb-4 mb-6">
+            <h2 className="text-xl font-bold uppercase tracking-[0.2em]">Year in Review</h2>
+        </div>
+        <h1 className="text-8xl md:text-9xl font-black tracking-tighter mb-2">{stats.year}</h1>
+        <div className="flex justify-center gap-4 mt-8">
+            <div className="w-4 h-4 bg-bauhaus-red rounded-full border-2 border-black"></div>
+            <div className="w-4 h-4 bg-bauhaus-blue border-2 border-black"></div>
+            <div className="w-4 h-4 bg-bauhaus-yellow rotate-45 border-2 border-black"></div>
+        </div>
       </motion.div>
-      <motion.p 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 1 }}
-        className="text-slate-400 text-lg md:text-xl max-w-md leading-relaxed"
-      >
-        The lights dimmed. The projector whirred. <br/> Here is the story of what you watched.
-      </motion.p>
     </div>
   );
 
+  // --- SLIDE 2: VOLUME (Yellow Background) ---
   const SlideVolume = () => (
-    <div className="flex flex-col items-center justify-center min-h-full py-16 px-6 text-center w-full max-w-6xl mx-auto">
-        <h3 className="text-3xl text-slate-300 mb-12 font-light">The Scale of It All</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-12">
-            <motion.div 
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 flex flex-col items-center justify-center"
-            >
-                <div className="text-6xl md:text-8xl font-black text-green-500 mb-4">{stats.totalWatched}</div>
-                <div className="text-xl text-slate-400 uppercase tracking-wider font-semibold">Films Watched</div>
-                <div className="mt-4 text-sm text-slate-500">~{stats.moviesPerWeekAvg} per week</div>
-            </motion.div>
+    <div className="flex flex-col min-h-full py-16 px-6 bg-bauhaus-yellow text-bauhaus-black">
+        <div className="max-w-6xl mx-auto w-full">
+            <h3 className="text-6xl font-black uppercase mb-12 border-b-4 border-black pb-4">Volume Analysis</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                {/* Total Watched */}
+                <div className="bg-white border-4 border-black p-8 shadow-hard-md relative hover:-translate-y-2 transition-transform">
+                    <div className="absolute top-4 right-4 w-8 h-8 bg-bauhaus-red rounded-full border-2 border-black"></div>
+                    <div className="text-8xl font-black text-bauhaus-blue mb-2">{stats.totalWatched}</div>
+                    <div className="text-xl font-bold uppercase tracking-widest border-t-4 border-black pt-2">Films Watched</div>
+                </div>
 
-            <motion.div 
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 flex flex-col items-center justify-center"
-            >
-                <div className="text-6xl md:text-8xl font-black text-orange-500 mb-4">{stats.totalRuntimeHours}</div>
-                <div className="text-xl text-slate-400 uppercase tracking-wider font-semibold">Hours Spent</div>
-                <div className="mt-4 text-sm text-slate-500">{(stats.totalRuntimeHours / 24).toFixed(1)} full days</div>
-            </motion.div>
+                {/* Total Hours */}
+                <div className="bg-white border-4 border-black p-8 shadow-hard-md relative hover:-translate-y-2 transition-transform">
+                     <div className="absolute top-4 right-4 w-8 h-8 bg-bauhaus-blue rotate-45 border-2 border-black"></div>
+                    <div className="text-8xl font-black text-bauhaus-red mb-2">{stats.totalRuntimeHours}</div>
+                    <div className="text-xl font-bold uppercase tracking-widest border-t-4 border-black pt-2">Hours Spent</div>
+                </div>
+            </div>
+
+            {/* Eras Chart */}
+            <div className="bg-bauhaus-bg border-4 border-black p-8 shadow-hard-md">
+                <div className="flex items-center gap-2 mb-6 border-b-2 border-black pb-2">
+                    <div className="w-4 h-4 bg-black"></div>
+                    <h4 className="text-2xl font-black uppercase">Eras Distribution</h4>
+                </div>
+                <div className="w-full h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats.decadeDistribution}>
+                            <XAxis dataKey="decade" tick={{fill: '#121212', fontWeight: 700}} axisLine={{stroke: '#121212', strokeWidth: 2}} tickLine={false} />
+                            <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                            <Bar dataKey="count" fill="#121212" radius={0}>
+                                {stats.decadeDistribution.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#1040C0' : '#D02020'} stroke="#121212" strokeWidth={2} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
         </div>
+    </div>
+  );
 
-        {/* Eras Chart */}
-        <div className="w-full bg-slate-900/30 p-6 rounded-2xl border border-slate-800/50">
-            <h4 className="text-xl text-white mb-6 cinematic-text text-left pl-2 border-l-4 border-purple-500">Eras Watched</h4>
-            <div className="w-full h-64">
+  // --- SLIDE 3: RHYTHM (White Background) ---
+  const SlideRhythm = () => (
+    <div className="flex flex-col min-h-full py-16 px-6 bg-white text-bauhaus-black">
+        <div className="max-w-5xl mx-auto w-full">
+            <h3 className="text-6xl font-black uppercase mb-8">Rhythm &<br/><span className="text-bauhaus-red">Patterns</span></h3>
+
+            {/* Heatmap Section */}
+            <div className="border-4 border-black p-6 mb-12 shadow-hard-md bg-white">
+                 <div className="flex items-center justify-between mb-4">
+                    <span className="font-bold uppercase bg-bauhaus-yellow px-2 border-2 border-black">Daily Activity</span>
+                 </div>
+                 <CalendarHeatmap data={stats.dailyActivity} year={stats.year} />
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-12">
+                 <div className="bg-bauhaus-bg border-4 border-black p-6 shadow-hard-sm">
+                    <Flame className="w-10 h-10 text-bauhaus-red mb-4" strokeWidth={2.5} />
+                    <div className="text-5xl font-black">{stats.longestStreak}</div>
+                    <div className="text-sm font-bold uppercase mt-2">Day Streak</div>
+                 </div>
+
+                 <div className="bg-bauhaus-bg border-4 border-black p-6 shadow-hard-sm">
+                    <Trophy className="w-10 h-10 text-bauhaus-yellow fill-current mb-4 text-black stroke-black" strokeWidth={2} />
+                    <div className="text-5xl font-black">{stats.busiestDay.count}</div>
+                    <div className="text-sm font-bold uppercase mt-2">Max in 1 Day</div>
+                 </div>
+
+                 <div className="bg-bauhaus-bg border-4 border-black p-6 shadow-hard-sm">
+                    <Clock className="w-10 h-10 text-bauhaus-blue mb-4" strokeWidth={2.5} />
+                    <div className="text-4xl font-black pt-2">{stats.topDayOfWeek.substring(0,3)}</div>
+                    <div className="text-sm font-bold uppercase mt-2">Fav Day</div>
+                 </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Monthly Chart */}
+                <div className="border-4 border-black p-6">
+                     <h4 className="text-xl font-black uppercase mb-4 bg-bauhaus-blue text-white inline-block px-2">Monthly</h4>
+                    <div className="w-full h-40">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={stats.monthlyDistribution}>
+                                <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                                <Bar dataKey="count" stroke="#121212" strokeWidth={2}>
+                                    {stats.monthlyDistribution.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.month === stats.topMonth ? '#F0C020' : '#E0E0E0'} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Weekly Breakdown */}
+                 <div className="border-4 border-black p-6">
+                    <h4 className="text-xl font-black uppercase mb-4 bg-bauhaus-red text-white inline-block px-2">Weekly</h4>
+                    <div className="w-full h-40">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={stats.dayOfWeekDistribution}>
+                                <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                                 <Bar dataKey="count" stroke="#121212" strokeWidth={2}>
+                                    {stats.dayOfWeekDistribution.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.day === stats.topDayOfWeek ? '#1040C0' : '#E0E0E0'} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                         <div className="flex justify-between text-[10px] font-bold uppercase mt-2">
+                            {stats.dayOfWeekDistribution.map(d => <span key={d.day}>{d.day.substring(0,1)}</span>)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="h-20"></div>
+        </div>
+    </div>
+  );
+
+  // --- SLIDE 4: RATINGS (Blue Background) ---
+  const SlideRatings = () => (
+    <div className="flex flex-col min-h-full py-16 px-6 bg-bauhaus-blue text-white">
+         <div className="max-w-5xl mx-auto w-full">
+            <h3 className="text-6xl font-black uppercase mb-12 text-center md:text-left">Critical<br/>Analysis</h3>
+         
+             <div className="flex flex-col md:flex-row items-center gap-12 w-full mb-16 bg-white text-black border-4 border-black p-8 shadow-hard-lg">
+                 <div className="flex-1 text-center border-b-4 md:border-b-0 md:border-r-4 border-black pb-6 md:pb-0 md:pr-6">
+                    <div className="text-9xl font-black text-bauhaus-red">{stats.averageRating}</div>
+                    <p className="font-bold uppercase tracking-widest text-lg bg-black text-white inline-block px-2 mt-2">Average</p>
+                 </div>
+                 
+                 <div className="flex-1 text-center md:text-left">
+                     <p className="text-2xl font-bold leading-tight uppercase">
+                        "{stats.averageRating > 3.5 ? "Generous & Enthusiastic." : stats.averageRating > 2.8 ? "Balanced & Fair." : "Strict & Exacting."}"
+                     </p>
+                 </div>
+             </div>
+
+             <div className="w-full h-80 bg-bauhaus-yellow p-8 border-4 border-black shadow-hard-md">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.decadeDistribution}>
-                        <XAxis dataKey="decade" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                        <Tooltip 
-                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', color: '#fff' }}
-                            cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                        />
-                        <Bar dataKey="count" fill="#a855f7" radius={[4, 4, 0, 0]}>
-                             {stats.decadeDistribution.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fillOpacity={0.6 + (index / stats.decadeDistribution.length) * 0.4} />
+                    <BarChart data={stats.ratingDistribution} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                        <XAxis dataKey="rating" tick={{fill: '#121212', fontWeight: 900}} axisLine={{stroke: '#121212', strokeWidth: 3}} tickLine={false} />
+                        <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                        <Bar dataKey="count" fill="#fff" stroke="#121212" strokeWidth={2} radius={0}>
+                             {stats.ratingDistribution.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={parseFloat(entry.rating) >= 4 ? '#D02020' : '#FFFFFF'} />
                             ))}
                         </Bar>
                     </BarChart>
@@ -105,225 +231,103 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
     </div>
   );
 
-  const SlideRhythm = () => (
-    <div className="flex flex-col items-center min-h-full py-16 px-4 w-full max-w-5xl mx-auto">
-        <h3 className="text-3xl font-bold text-white mb-2 cinematic-text">Your Cinematic Rhythm</h3>
-        <p className="text-slate-400 mb-8 text-center max-w-lg">Every day you watched a film is a pixel in your story. <br/> Scroll down to see your patterns.</p>
-
-        {/* Heatmap Section */}
-        <div className="w-full bg-slate-900/40 p-4 rounded-xl border border-slate-800 mb-8 overflow-hidden">
-             <div className="flex items-center gap-2 mb-4 text-slate-300">
-                <Calendar size={18} className="text-orange-400" />
-                <span className="font-semibold text-sm uppercase tracking-wide">Daily Activity</span>
-             </div>
-             <CalendarHeatmap data={stats.dailyActivity} year={stats.year} />
-        </div>
-        
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-8">
-             <motion.div 
-                whileHover={{ scale: 1.02 }}
-                className="bg-slate-800/40 p-6 rounded-xl flex flex-col items-center text-center border border-slate-700/50"
-             >
-                <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center mb-3">
-                    <Flame className="text-orange-500" size={24} />
-                </div>
-                <div className="text-3xl font-black text-white">{stats.longestStreak}</div>
-                <div className="text-xs text-slate-400 uppercase tracking-wide font-bold mt-1">Longest Streak</div>
-             </motion.div>
-
-             <motion.div 
-                whileHover={{ scale: 1.02 }}
-                className="bg-slate-800/40 p-6 rounded-xl flex flex-col items-center text-center border border-slate-700/50"
-             >
-                <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center mb-3">
-                     <Trophy className="text-yellow-500" size={24} />
-                </div>
-                <div className="text-3xl font-black text-white">{stats.busiestDay.count}</div>
-                <div className="text-xs text-slate-400 uppercase tracking-wide font-bold mt-1">Movies in 1 Day</div>
-                <div className="text-[10px] text-slate-500 mt-1">{stats.busiestDay.date}</div>
-             </motion.div>
-
-             <motion.div 
-                whileHover={{ scale: 1.02 }}
-                className="bg-slate-800/40 p-6 rounded-xl flex flex-col items-center text-center border border-slate-700/50"
-             >
-                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-3">
-                    <Clock className="text-green-500" size={24} />
-                </div>
-                <div className="text-2xl font-black text-white pt-1">{stats.topDayOfWeek}</div>
-                <div className="text-xs text-slate-400 uppercase tracking-wide font-bold mt-1">Favorite Day</div>
-             </motion.div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-            {/* Monthly Chart */}
-            <div className="w-full bg-slate-900/30 p-6 rounded-2xl border border-slate-800/50">
-                 <h4 className="text-sm uppercase tracking-widest text-slate-400 mb-6 font-bold">Monthly Volume</h4>
-                <div className="w-full h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats.monthlyDistribution}>
-                            <Tooltip 
-                                contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                                cursor={{fill: 'transparent'}}
-                            />
-                            <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-                                {stats.monthlyDistribution.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.month === stats.topMonth ? '#f97316' : '#475569'} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            {/* Weekly Breakdown */}
-             <div className="w-full bg-slate-900/30 p-6 rounded-2xl border border-slate-800/50">
-                <h4 className="text-sm uppercase tracking-widest text-slate-400 mb-6 font-bold">Weekly Rituals</h4>
-                <div className="w-full h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats.dayOfWeekDistribution}>
-                            <XAxis dataKey="day" hide />
-                            <Tooltip 
-                                contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                                cursor={{fill: 'transparent'}}
-                                labelFormatter={(value) => value}
-                            />
-                             <Bar dataKey="count" radius={[4, 4, 4, 4]}>
-                                {stats.dayOfWeekDistribution.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.day === stats.topDayOfWeek ? '#22c55e' : '#334155'} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                     <div className="flex justify-between text-[10px] text-slate-500 mt-2 px-2 uppercase font-mono">
-                        {stats.dayOfWeekDistribution.map(d => <span key={d.day}>{d.day.substring(0,3)}</span>)}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div className="h-12"></div> {/* Spacer for scroll */}
-    </div>
-  );
-
-  const SlideRatings = () => (
-    <div className="flex flex-col items-center min-h-full py-16 px-6 w-full max-w-5xl mx-auto">
-         <h3 className="text-3xl font-bold text-white mb-8 cinematic-text">The Critic's Corner</h3>
-         
-         <div className="flex flex-col md:flex-row items-center gap-12 w-full mb-12">
-             <div className="flex-1 text-center md:text-right">
-                <div className="text-8xl font-black text-yellow-500 mb-2 drop-shadow-lg shadow-yellow-500/20">{stats.averageRating}</div>
-                <p className="text-slate-400 uppercase tracking-widest text-sm">Average Rating</p>
-             </div>
-             
-             <div className="w-px h-32 bg-slate-800 hidden md:block"></div>
-
-             <div className="flex-1 text-center md:text-left">
-                 <p className="text-xl text-slate-200 italic font-serif leading-relaxed max-w-xs mx-auto md:mx-0">
-                    "{stats.averageRating > 3.5 ? "A generous spirit who finds joy in the moving image." : stats.averageRating > 2.8 ? "Balanced and fair, respecting the craft." : "A discerning eye that demands perfection."}"
-                 </p>
-             </div>
-         </div>
-
-         <div className="w-full h-72 bg-slate-900/40 p-6 rounded-2xl border border-slate-800/50">
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.ratingDistribution} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <XAxis dataKey="rating" stroke="#94a3b8" fontSize={14} tickLine={false} axisLine={false} />
-                    <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: '#1e293b', border: 'none', color: '#fff' }} />
-                    <Bar dataKey="count" fill="#eab308" radius={[6, 6, 0, 0]} animationDuration={1500}>
-                         {stats.ratingDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fillOpacity={0.7 + (parseFloat(entry.rating)/5) * 0.3} />
-                        ))}
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
-        </div>
-    </div>
-  );
-
+  // --- SLIDE 5: FAVORITES (White Background) ---
   const SlideFavorites = () => (
-    <div className="flex flex-col items-center min-h-full py-16 px-4 w-full max-w-4xl mx-auto">
-        <h3 className="text-3xl font-bold text-white mb-10 cinematic-text">Highest Rated</h3>
-        <div className="space-y-4 w-full mb-12">
-            {stats.topRatedFilms.map((film, idx) => (
-                <motion.div 
-                    key={idx}
-                    initial={{ x: -50, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="group flex items-center justify-between bg-slate-800/40 hover:bg-slate-800/60 p-5 rounded-xl border-l-4 border-green-500 transition-colors"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="text-slate-500 font-mono text-sm w-6">#{idx + 1}</div>
-                        <div>
-                            <div className="text-lg md:text-xl font-bold text-white group-hover:text-green-400 transition-colors">{film.Name}</div>
-                            <div className="text-slate-400 text-sm">{film.Year}</div>
+    <div className="flex flex-col min-h-full py-16 px-6 bg-white text-bauhaus-black">
+        <div className="max-w-4xl mx-auto w-full">
+            <h3 className="text-5xl md:text-6xl font-black uppercase mb-12 border-l-8 border-bauhaus-yellow pl-4">Highest<br/>Rated</h3>
+            
+            <div className="space-y-6 w-full mb-16">
+                {stats.topRatedFilms.map((film, idx) => (
+                    <motion.div 
+                        key={idx}
+                        initial={{ x: -20, opacity: 0 }}
+                        whileInView={{ x: 0, opacity: 1 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="flex items-center justify-between bg-white border-2 border-black p-4 shadow-hard-sm hover:-translate-y-1 transition-transform"
+                    >
+                        <div className="flex items-center gap-6">
+                            <div className="font-black text-2xl w-8 h-8 bg-bauhaus-black text-white flex items-center justify-center rounded-none">{idx + 1}</div>
+                            <div>
+                                <div className="text-xl md:text-2xl font-bold uppercase leading-none mb-1">{film.Name}</div>
+                                <div className="text-sm font-bold text-gray-500">{film.Year}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-2 bg-slate-950/50 px-3 py-1 rounded-lg">
-                        <span className="text-yellow-500">★</span>
-                        <span className="font-bold text-white">{film.Rating}</span>
-                    </div>
-                </motion.div>
-            ))}
-             {stats.topRatedFilms.length === 0 && <p className="text-slate-500">No rated films found.</p>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 w-full">
-            <div className="bg-slate-900/40 p-6 rounded-2xl border border-slate-800 text-center">
-                 <div className="text-3xl font-bold text-orange-500 mb-1">{stats.rewatchCount}</div>
-                 <div className="text-xs text-slate-400 uppercase">Rewatches</div>
+                        <div className="flex items-center gap-1 bg-bauhaus-blue text-white px-3 py-1 border-2 border-black">
+                            <Star size={16} fill="white" />
+                            <span className="font-bold">{film.Rating}</span>
+                        </div>
+                    </motion.div>
+                ))}
             </div>
-            <div className="bg-slate-900/40 p-6 rounded-2xl border border-slate-800 text-center">
-                 <div className="text-3xl font-bold text-purple-500 mb-1">{stats.uniqueFilmsCount}</div>
-                 <div className="text-xs text-slate-400 uppercase">New Discoveries</div>
-            </div>
-        </div>
 
-         <div className="mt-8 text-center text-slate-500 text-sm">
-            Bookends: <span className="text-slate-300">{stats.firstFilm}</span> (Jan 1) → <span className="text-slate-300">{stats.lastFilm}</span> (Dec 31)
+            <div className="grid grid-cols-2 gap-8">
+                <div className="bg-bauhaus-red text-white p-6 border-4 border-black text-center shadow-hard-md">
+                     <div className="text-6xl font-black mb-2">{stats.rewatchCount}</div>
+                     <div className="font-bold uppercase tracking-widest">Rewatches</div>
+                </div>
+                <div className="bg-bauhaus-blue text-white p-6 border-4 border-black text-center shadow-hard-md">
+                     <div className="text-6xl font-black mb-2">{stats.uniqueFilmsCount}</div>
+                     <div className="font-bold uppercase tracking-widest">New Films</div>
+                </div>
+            </div>
+            
+            <div className="mt-12 pt-8 border-t-4 border-black text-center">
+                <span className="font-bold uppercase">First:</span> {stats.firstFilm} <span className="mx-2 text-bauhaus-red font-black">///</span> <span className="font-bold uppercase">Last:</span> {stats.lastFilm}
+            </div>
         </div>
     </div>
   );
 
+  // --- SLIDE 6: IDENTITY (Yellow Background) ---
   const SlideIdentity = () => (
-    <div className="flex flex-col items-center justify-center min-h-full py-16 px-6 text-center max-w-3xl mx-auto">
-        <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 md:p-12 rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden"
-        >
-             {/* Decorative element */}
-             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-
-            <div className="text-orange-500 font-bold tracking-widest uppercase mb-6 flex items-center justify-center gap-2">
-                <Film size={20} />
-                Your Persona
+    <div className="flex flex-col items-center justify-center min-h-full py-16 px-6 bg-bauhaus-yellow text-bauhaus-black relative overflow-hidden">
+        {/* Poster Design Layout */}
+        <div className="max-w-3xl w-full border-4 border-black bg-white p-8 md:p-12 shadow-hard-lg relative z-10">
+            {/* Top Decoration */}
+            <div className="flex justify-between items-start mb-8 border-b-4 border-black pb-8">
+                <div className="flex gap-2">
+                    <div className="w-8 h-8 bg-bauhaus-red border-2 border-black rounded-full"></div>
+                    <div className="w-8 h-8 bg-bauhaus-blue border-2 border-black"></div>
+                </div>
+                <div className="text-right">
+                   <div className="font-black uppercase text-xl tracking-tighter">Persona</div>
+                   <div className="text-sm font-bold">Analysis Module</div>
+                </div>
             </div>
+
             {persona ? (
-                <>
-                    <h2 className="text-4xl md:text-6xl font-black text-white mb-8 cinematic-text leading-tight">{persona.title}</h2>
-                    <p className="text-lg md:text-xl text-slate-300 leading-relaxed font-light italic">
+                <div className="text-center">
+                    <h2 className="text-5xl md:text-7xl font-black uppercase leading-[0.9] mb-8 text-bauhaus-black">
+                        {persona.title}
+                    </h2>
+                    <div className="w-24 h-2 bg-bauhaus-black mx-auto mb-8"></div>
+                    <p className="text-xl md:text-2xl font-bold uppercase leading-relaxed max-w-2xl mx-auto">
                         "{persona.description}"
                     </p>
-                </>
+                </div>
             ) : (
-                 <div className="animate-pulse flex flex-col items-center">
-                    <div className="h-8 w-64 bg-slate-700 rounded mb-4"></div>
-                    <div className="h-4 w-full bg-slate-700 rounded mb-2"></div>
-                    <div className="h-4 w-3/4 bg-slate-700 rounded"></div>
-                    <p className="mt-6 text-sm text-slate-500 font-mono">Gemini is analyzing your taste...</p>
+                 <div className="animate-pulse flex flex-col items-center justify-center py-12">
+                    <div className="w-12 h-12 border-4 border-t-bauhaus-red border-r-bauhaus-blue border-b-bauhaus-yellow border-l-black rounded-full animate-spin mb-4"></div>
+                    <p className="font-bold uppercase">Constructing Persona...</p>
                  </div>
             )}
-        </motion.div>
+            
+            {/* Bottom Decoration */}
+            <div className="mt-12 pt-8 border-t-4 border-black flex justify-center">
+                <button 
+                    onClick={onReset}
+                    className="flex items-center gap-3 px-8 py-4 bg-bauhaus-black text-white font-black uppercase tracking-widest hover:bg-bauhaus-red transition-colors border-2 border-transparent hover:border-black shadow-hard-sm hover:shadow-none hover:translate-x-1 hover:translate-y-1"
+                >
+                    <RotateCcw size={20} />
+                    Reset
+                </button>
+            </div>
+        </div>
         
-        <button 
-            onClick={onReset}
-            className="mt-12 flex items-center gap-3 px-8 py-3 bg-slate-800 hover:bg-slate-700 rounded-full text-slate-200 hover:text-white transition-all font-semibold"
-        >
-            <RotateCcw size={18} />
-            Generate Another
-        </button>
+        {/* Background shapes */}
+        <div className="absolute top-10 left-10 w-32 h-32 bg-bauhaus-blue border-4 border-black rounded-full"></div>
+        <div className="absolute bottom-10 right-10 w-48 h-48 bg-bauhaus-red border-4 border-black rotate-12"></div>
     </div>
   );
 
@@ -331,29 +335,30 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
   const CurrentSlideComponent = slides[currentSlide];
 
   return (
-    <div className="fixed inset-0 bg-slate-950 text-slate-100 flex flex-col">
-      {/* Progress Bar */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-slate-900 z-50 flex gap-1 p-2">
+    <div className="fixed inset-0 bg-bauhaus-bg text-bauhaus-fg flex flex-col font-sans">
+      
+      {/* Progress Bar (Top Border Style) */}
+      <div className="h-4 w-full flex border-b-4 border-black">
         {slides.map((_, idx) => (
             <div 
                 key={idx} 
-                className={`h-1 flex-1 rounded-full transition-all duration-300 ${idx <= currentSlide ? 'bg-orange-500' : 'bg-slate-800'}`}
+                className={`h-full flex-1 border-r border-black transition-all duration-300 ${idx <= currentSlide ? 'bg-bauhaus-red' : 'bg-white'}`}
             />
         ))}
       </div>
 
-      {/* Main Content Area - Scrollable */}
+      {/* Main Scrollable Area */}
       <div 
         ref={scrollContainerRef}
-        className="flex-1 relative overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth"
+        className="flex-1 relative overflow-y-auto overflow-x-hidden custom-scrollbar bg-white"
       >
         <AnimatePresence mode="wait">
             <motion.div
                 key={currentSlide}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
                 className="w-full min-h-full"
             >
                 <CurrentSlideComponent />
@@ -361,26 +366,26 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
         </AnimatePresence>
       </div>
 
-      {/* Navigation Controls */}
-      <div className="h-20 flex items-center justify-between px-8 pb-4 z-40 bg-gradient-to-t from-slate-950 to-transparent absolute bottom-0 w-full pointer-events-none">
+      {/* Navigation Controls (Fixed Bottom) */}
+      <div className="h-20 flex items-center justify-between px-8 bg-white border-t-4 border-black z-50">
         <button 
             onClick={prevSlide} 
             disabled={currentSlide === 0}
-            className={`pointer-events-auto p-3 rounded-full hover:bg-slate-800/80 backdrop-blur-sm transition-colors ${currentSlide === 0 ? 'opacity-0' : 'opacity-100'}`}
+            className={`p-3 border-2 border-black bg-white shadow-hard-sm hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none transition-all ${currentSlide === 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         >
-            <ChevronLeft size={32} />
+            <ChevronLeft size={24} strokeWidth={3} />
         </button>
 
-        <div className="text-xs text-slate-500 font-mono pointer-events-auto">
-            {currentSlide + 1} / {totalSlides}
+        <div className="text-xl font-black">
+            {currentSlide + 1} <span className="text-gray-400 mx-1">/</span> {totalSlides}
         </div>
 
         <button 
             onClick={nextSlide} 
             disabled={currentSlide === totalSlides - 1}
-            className={`pointer-events-auto p-3 rounded-full hover:bg-slate-800/80 backdrop-blur-sm transition-colors ${currentSlide === totalSlides - 1 ? 'opacity-0' : 'opacity-100'}`}
+            className={`p-3 border-2 border-black bg-bauhaus-yellow shadow-hard-sm hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none transition-all ${currentSlide === totalSlides - 1 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         >
-            <ChevronRight size={32} />
+            <ChevronRight size={24} strokeWidth={3} />
         </button>
       </div>
     </div>

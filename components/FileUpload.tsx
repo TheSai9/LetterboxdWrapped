@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Play, Square, Triangle, Circle } from 'lucide-react';
 import { parseCSV } from '../services/csvParser';
 import { processData } from '../services/statsService';
 import { DiaryEntry, RatingEntry, ProcessedStats } from '../types';
@@ -24,19 +24,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
         if (type === 'diary') {
           const parsed = parseCSV<DiaryEntry>(text);
           if (!parsed[0]?.Date && !parsed[0]?.["Watched Date"]) {
-             throw new Error("Invalid Diary CSV. Check format.");
+             throw new Error("Invalid Diary CSV.");
           }
           setDiaryData(parsed);
         } else {
           const parsed = parseCSV<RatingEntry>(text);
           if (!parsed[0]?.Rating) {
-             throw new Error("Invalid Ratings CSV. Check format.");
+             throw new Error("Invalid Ratings CSV.");
           }
           setRatingsData(parsed);
         }
         setError(null);
       } catch (err) {
-        setError("Failed to parse file. Please ensure it is a valid Letterboxd export.");
+        setError("Failed to parse file. Ensure it is a valid Letterboxd export.");
       }
     };
     reader.readAsText(file);
@@ -44,91 +44,115 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
 
   const handleGenerate = () => {
     if (diaryData.length === 0) {
-      setError("Please upload your diary.csv at minimum.");
+      setError("Diary CSV is required.");
       return;
     }
     const stats = processData(diaryData, ratingsData);
     if (stats) {
       onDataProcessed(stats);
     } else {
-      setError("Could not process stats. Ensure your diary contains data for a recent year.");
+      setError("Could not process stats. Check your data.");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-100 relative overflow-hidden">
-        {/* Background blobs */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-orange-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-600/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
+    <div className="min-h-screen flex flex-col md:flex-row bg-bauhaus-bg text-bauhaus-fg relative overflow-hidden">
+      
+      {/* Left Panel: Geometric Composition */}
+      <div className="hidden md:flex w-1/3 bg-bauhaus-blue border-r-4 border-bauhaus-black flex-col justify-between p-12 relative overflow-hidden">
+        {/* Abstract Shapes */}
+        <div className="absolute top-12 -left-12 w-64 h-64 bg-bauhaus-red rounded-full border-4 border-bauhaus-black"></div>
+        <div className="absolute bottom-24 -right-12 w-48 h-48 bg-bauhaus-yellow rotate-45 border-4 border-bauhaus-black"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-10"
+             style={{ backgroundImage: 'radial-gradient(#fff 2px, transparent 2px)', backgroundSize: '20px 20px' }}></div>
 
-      <div className="max-w-xl w-full bg-slate-900/50 backdrop-blur-md border border-slate-800 p-8 rounded-2xl shadow-2xl z-10">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-orange-400 to-amber-200 bg-clip-text text-transparent cinematic-text">
-            CineWrapped
-          </h1>
-          <p className="text-slate-400">
-            Export your data from Letterboxd settings and upload the CSVs below to generate your cinematic year in review.
-          </p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Diary Input */}
-          <div className="group relative">
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              1. Upload <code className="bg-slate-800 px-1 py-0.5 rounded text-orange-300">diary.csv</code> (Required)
-            </label>
-            <div className={`border-2 border-dashed rounded-xl p-6 transition-all ${diaryData.length > 0 ? 'border-green-500/50 bg-green-500/5' : 'border-slate-700 hover:border-orange-500/50 hover:bg-slate-800/50'}`}>
-              <div className="flex items-center justify-center gap-4">
-                {diaryData.length > 0 ? <CheckCircle className="text-green-400 w-8 h-8" /> : <FileText className="text-slate-500 w-8 h-8" />}
-                <div className="flex-1">
-                    <input 
-                        type="file" 
-                        accept=".csv"
-                        onChange={(e) => handleFileChange(e, 'diary')}
-                        className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-700 cursor-pointer"
-                    />
-                </div>
-              </div>
-              {diaryData.length > 0 && <p className="text-xs text-green-400 mt-2 text-center">{diaryData.length} entries loaded</p>}
-            </div>
-          </div>
-
-          {/* Ratings Input */}
-          <div className="group relative">
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              2. Upload <code className="bg-slate-800 px-1 py-0.5 rounded text-green-300">ratings.csv</code> (Optional)
-            </label>
-             <div className={`border-2 border-dashed rounded-xl p-6 transition-all ${ratingsData.length > 0 ? 'border-green-500/50 bg-green-500/5' : 'border-slate-700 hover:border-green-500/50 hover:bg-slate-800/50'}`}>
-              <div className="flex items-center justify-center gap-4">
-                {ratingsData.length > 0 ? <CheckCircle className="text-green-400 w-8 h-8" /> : <FileText className="text-slate-500 w-8 h-8" />}
-                <div className="flex-1">
-                    <input 
-                        type="file" 
-                        accept=".csv"
-                        onChange={(e) => handleFileChange(e, 'ratings')}
-                        className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 cursor-pointer"
-                    />
-                </div>
-              </div>
-               {ratingsData.length > 0 && <p className="text-xs text-green-400 mt-2 text-center">{ratingsData.length} ratings loaded</p>}
-            </div>
+        <div className="relative z-10">
+          <div className="text-8xl font-black text-white leading-none tracking-tighter drop-shadow-[4px_4px_0px_black]">
+            CINE
+            <br />
+            WRAP
+            <br />
+            PED
           </div>
         </div>
+        
+        <div className="relative z-10 text-white font-bold text-xl uppercase tracking-widest border-l-4 border-white pl-4">
+          Letterboxd<br/>Year in Review
+        </div>
+      </div>
 
-        {error && (
-            <div className="mt-6 flex items-center gap-2 text-red-400 bg-red-900/20 p-3 rounded-lg text-sm">
-                <AlertCircle size={16} />
-                {error}
+      {/* Right Panel: Content */}
+      <div className="flex-1 flex flex-col justify-center items-center p-8 md:p-16 relative">
+         {/* Mobile Header */}
+         <div className="md:hidden w-full mb-12 border-b-4 border-bauhaus-black pb-8">
+            <h1 className="text-6xl font-black text-bauhaus-fg tracking-tighter">CINE<br/>WRAPPED</h1>
+         </div>
+
+         <div className="w-full max-w-lg space-y-8">
+            <p className="font-medium text-lg border-l-4 border-bauhaus-red pl-4">
+              Construct your viewing history. Upload your Letterboxd data to generate a geometric analysis of your year.
+            </p>
+
+            {/* Inputs */}
+            <div className="space-y-6">
+              
+              {/* Diary Input */}
+              <div className="relative group">
+                 <div className="absolute -inset-1 bg-bauhaus-black translate-x-2 translate-y-2 rounded-none"></div>
+                 <div className={`relative bg-white border-2 border-bauhaus-black p-6 transition-transform group-hover:-translate-y-1 ${diaryData.length > 0 ? 'bg-green-100' : ''}`}>
+                    <label className="flex flex-col cursor-pointer">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-xl uppercase">1. Diary.csv</span>
+                        {diaryData.length > 0 ? <CheckCircle className="text-bauhaus-black w-6 h-6" /> : <Square className="text-bauhaus-black w-6 h-6" />}
+                      </div>
+                      <span className="text-sm font-medium text-gray-600 mb-4">Required. Your log of watched films.</span>
+                      <input type="file" accept=".csv" onChange={(e) => handleFileChange(e, 'diary')} className="hidden" />
+                      <div className="bg-bauhaus-black text-white text-center py-2 font-bold uppercase hover:bg-bauhaus-red transition-colors">
+                        Select File
+                      </div>
+                    </label>
+                 </div>
+              </div>
+
+              {/* Ratings Input */}
+              <div className="relative group">
+                 <div className="absolute -inset-1 bg-bauhaus-black translate-x-2 translate-y-2 rounded-none"></div>
+                 <div className={`relative bg-white border-2 border-bauhaus-black p-6 transition-transform group-hover:-translate-y-1 ${ratingsData.length > 0 ? 'bg-green-100' : ''}`}>
+                    <label className="flex flex-col cursor-pointer">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-xl uppercase">2. Ratings.csv</span>
+                         {ratingsData.length > 0 ? <CheckCircle className="text-bauhaus-black w-6 h-6" /> : <Circle className="text-bauhaus-black w-6 h-6" />}
+                      </div>
+                      <span className="text-sm font-medium text-gray-600 mb-4">Optional. For ratings distribution.</span>
+                      <input type="file" accept=".csv" onChange={(e) => handleFileChange(e, 'ratings')} className="hidden" />
+                      <div className="bg-bauhaus-black text-white text-center py-2 font-bold uppercase hover:bg-bauhaus-blue transition-colors">
+                        Select File
+                      </div>
+                    </label>
+                 </div>
+              </div>
+
             </div>
-        )}
 
-        <button
-          onClick={handleGenerate}
-          disabled={diaryData.length === 0}
-          className={`mt-8 w-full py-4 rounded-xl font-bold text-lg transition-all transform active:scale-95 ${diaryData.length === 0 ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg shadow-orange-900/50'}`}
-        >
-          Start The Show
-        </button>
+            {error && (
+              <div className="bg-bauhaus-red text-white p-4 border-2 border-bauhaus-black shadow-hard-sm flex items-center gap-3 font-bold">
+                 <AlertCircle className="w-6 h-6" />
+                 {error}
+              </div>
+            )}
+
+            <button
+              onClick={handleGenerate}
+              disabled={diaryData.length === 0}
+              className={`w-full py-5 text-xl font-black uppercase tracking-widest border-2 border-bauhaus-black shadow-hard-md transition-all
+                ${diaryData.length === 0 
+                  ? 'bg-bauhaus-muted text-gray-500 cursor-not-allowed shadow-none' 
+                  : 'bg-bauhaus-yellow text-bauhaus-black hover:-translate-y-1 hover:shadow-hard-lg active:translate-x-1 active:translate-y-1 active:shadow-none'
+                }`}
+            >
+              Construct Analysis
+            </button>
+         </div>
       </div>
     </div>
   );
