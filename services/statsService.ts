@@ -39,11 +39,16 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
 
     // Decade Calc
-    const releaseYear = parseInt(entry.Year);
-    if (!isNaN(releaseYear)) {
-        const decade = Math.floor(releaseYear / 10) * 10;
-        const decadeStr = `${decade}s`;
-        decadeCounts[decadeStr] = (decadeCounts[decadeStr] || 0) + 1;
+    // Validate Year first
+    const yearStr = entry.Year ? entry.Year.trim() : "";
+    if (yearStr && !isNaN(parseInt(yearStr))) {
+        const releaseYear = parseInt(yearStr);
+        // Basic sanity check for year (e.g., between 1880 and current year + 1)
+        if (releaseYear > 1880 && releaseYear <= new Date().getFullYear() + 2) {
+            const decade = Math.floor(releaseYear / 10) * 10;
+            const decadeStr = `${decade}s`;
+            decadeCounts[decadeStr] = (decadeCounts[decadeStr] || 0) + 1;
+        }
     }
   });
 

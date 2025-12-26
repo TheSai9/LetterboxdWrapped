@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ProcessedStats, PersonaResult } from '../types';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell, LabelList } from 'recharts';
 import { generatePersona } from '../services/geminiService';
-import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star } from 'lucide-react';
+import { getMoviePoster } from '../services/tmdbService';
+import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film } from 'lucide-react';
 import CalendarHeatmap from './CalendarHeatmap';
 
 interface WrappedSlidesProps {
@@ -15,7 +16,7 @@ interface WrappedSlidesProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border-2 border-bauhaus-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-3">
+      <div className="bg-white border-2 border-bauhaus-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-3 z-50">
         <p className="font-black text-bauhaus-black text-xs uppercase tracking-widest mb-1">{label}</p>
         <p className="text-bauhaus-red font-black text-2xl leading-none">
           {payload[0].value}
@@ -99,6 +100,7 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
                     <h4 className="text-xl md:text-2xl font-black uppercase tracking-tight">Eras Distribution</h4>
                 </div>
                 <div className="flex-1 w-full min-h-[200px]">
+                  {stats.decadeDistribution && stats.decadeDistribution.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={stats.decadeDistribution} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
                             <XAxis 
@@ -117,6 +119,9 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase">No era data available</div>
+                  )}
                 </div>
             </div>
         </div>
@@ -246,36 +251,68 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
   );
 
   // --- SLIDE 5: FAVORITES (White Background) ---
-  const SlideFavorites = () => (
+  const SlideFavorites = () => {
+    const [posters, setPosters] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        const fetchPosters = async () => {
+            const newPosters: Record<string, string> = {};
+            for (const film of stats.topRatedFilms) {
+                const url = await getMoviePoster(film.Name, film.Year);
+                if (url) newPosters[film.Name] = url;
+            }
+            setPosters(newPosters);
+        };
+        fetchPosters();
+    }, []);
+
+    return (
     <div className="flex flex-col min-h-full py-12 px-4 md:px-8 bg-white text-bauhaus-black">
-        <div className="max-w-4xl mx-auto w-full">
+        <div className="max-w-6xl mx-auto w-full">
             <h3 className="text-4xl md:text-6xl font-black uppercase mb-8 md:mb-12 border-l-8 border-bauhaus-yellow pl-4">Highest<br/>Rated</h3>
             
-            <div className="space-y-4 md:space-y-6 w-full mb-8 md:mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
                 {stats.topRatedFilms.map((film, idx) => (
                     <motion.div 
                         key={idx}
-                        initial={{ x: -20, opacity: 0 }}
-                        whileInView={{ x: 0, opacity: 1 }}
+                        initial={{ y: 20, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="flex items-center justify-between bg-white border-2 border-black p-3 md:p-4 shadow-hard-sm hover:-translate-y-1 transition-transform"
+                        className="group relative flex flex-col"
                     >
-                        <div className="flex items-center gap-4 md:gap-6 overflow-hidden">
-                            <div className="font-black text-xl md:text-2xl w-8 h-8 md:w-10 md:h-10 bg-bauhaus-black text-white flex-shrink-0 flex items-center justify-center rounded-none">{idx + 1}</div>
-                            <div className="min-w-0">
-                                <div className="text-lg md:text-2xl font-bold uppercase leading-none mb-1 truncate">{film.Name}</div>
-                                <div className="text-xs md:text-sm font-bold text-gray-500">{film.Year}</div>
+                         {/* Card Container */}
+                        <div className="relative w-full aspect-[2/3] border-4 border-black shadow-hard-md group-hover:shadow-hard-lg group-hover:-translate-y-1 transition-all bg-gray-100 overflow-hidden">
+                            {posters[film.Name] ? (
+                                <img src={posters[film.Name]} alt={film.Name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-bauhaus-bg">
+                                    <Film size={32} className="mb-2 opacity-20" />
+                                    <span className="font-bold text-xs uppercase opacity-50">No Poster</span>
+                                </div>
+                            )}
+                            
+                            {/* Rank Badge */}
+                            <div className="absolute top-0 left-0 bg-bauhaus-red text-white w-10 h-10 flex items-center justify-center font-black text-xl border-b-4 border-r-4 border-black z-10">
+                                {idx + 1}
+                            </div>
+
+                            {/* Rating Badge */}
+                            <div className="absolute bottom-2 right-2 bg-bauhaus-blue text-white px-2 py-1 border-2 border-black flex items-center gap-1 shadow-sm">
+                                <Star size={12} fill="white" />
+                                <span className="font-bold text-sm">{film.Rating}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1 bg-bauhaus-blue text-white px-2 md:px-3 py-1 border-2 border-black flex-shrink-0">
-                            <Star size={14} fill="white" />
-                            <span className="font-bold text-sm md:text-base">{film.Rating}</span>
+
+                        {/* Title Info */}
+                        <div className="mt-3">
+                            <div className="text-lg font-black uppercase leading-tight line-clamp-2" title={film.Name}>{film.Name}</div>
+                            <div className="text-xs font-bold text-gray-500 mt-1">{film.Year}</div>
                         </div>
                     </motion.div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-2xl mx-auto">
                 <div className="bg-bauhaus-red text-white p-4 md:p-6 border-4 border-black text-center shadow-hard-md">
                      <div className="text-4xl md:text-6xl font-black mb-1 md:mb-2">{stats.rewatchCount}</div>
                      <div className="font-bold uppercase tracking-widest text-xs md:text-base">Rewatches</div>
@@ -291,7 +328,7 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
             </div>
         </div>
     </div>
-  );
+  )};
 
   // --- SLIDE 6: IDENTITY (Yellow Background) ---
   const SlideIdentity = () => (
