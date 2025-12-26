@@ -55,22 +55,40 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
 
     // Decade Calc & Film extraction
-    let yearStr = entry.Year;
+    let yearStr: string | undefined = entry.Year;
+
+    // Fallback 1: Case-insensitive search for "Year" key
     if (!yearStr) {
         const key = Object.keys(entry).find(k => k.toLowerCase() === 'year');
         if (key) yearStr = (entry as any)[key];
     }
     
-    yearStr = yearStr ? yearStr.trim() : "";
+    // Fallback 2: Explicitly grab the 3rd column (index 2) as requested
+    // Object.values returns values in column order for CSV parsed objects
+    if (!yearStr) {
+        const vals = Object.values(entry);
+        if (vals.length > 2) {
+             yearStr = vals[2];
+        }
+    }
+
+    // Clean year string (extract first 4 digit sequence found)
+    let cleanYear = "";
+    if (yearStr) {
+        const match = yearStr.toString().match(/(\d{4})/);
+        if (match) {
+            cleanYear = match[1];
+        }
+    }
     
     // Add to allFilms list
     allFilms.push({
         title: entry.Name,
-        year: yearStr
+        year: cleanYear
     });
     
-    if (yearStr && !isNaN(parseInt(yearStr))) {
-        const releaseYear = parseInt(yearStr);
+    if (cleanYear) {
+        const releaseYear = parseInt(cleanYear);
         // Basic sanity check for year (e.g., between 1880 and current year + 2)
         if (releaseYear > 1880 && releaseYear <= new Date().getFullYear() + 2) {
             const decade = Math.floor(releaseYear / 10) * 10;

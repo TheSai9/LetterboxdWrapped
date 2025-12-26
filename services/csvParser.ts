@@ -1,10 +1,13 @@
 
 /**
- * A robust CSV parser that handles quoted strings and different line endings.
+ * A robust CSV parser that handles quoted strings, different line endings, and BOM.
  */
 export const parseCSV = <T>(csvText: string): T[] => {
+  // Remove Byte Order Mark (BOM) if present
+  const cleanText = csvText.replace(/^\uFEFF/, '');
+
   // Normalize line endings to \n
-  const normalizedText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const normalizedText = cleanText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const lines = normalizedText.trim().split('\n');
   
   if (lines.length < 2) return [];
@@ -31,7 +34,8 @@ export const parseCSV = <T>(csvText: string): T[] => {
   };
 
   // Parse headers using the same logic to handle quoted headers
-  const headers = parseLine(lines[0]);
+  // Also strictly trim headers to avoid " Year" vs "Year" issues
+  const headers = parseLine(lines[0]).map(h => h.trim());
   
   const result: T[] = [];
 
