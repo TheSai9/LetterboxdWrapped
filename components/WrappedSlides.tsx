@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ProcessedStats, PersonaResult } from '../types';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell, LabelList } from 'recharts';
 import { generatePersona } from '../services/geminiService';
-import { getMoviePoster } from '../services/tmdbService';
-import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash } from 'lucide-react';
+import { getMoviePoster, streamEnrichedData, EnrichedDataUpdate } from '../services/tmdbService';
+import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database } from 'lucide-react';
 import CalendarHeatmap from './CalendarHeatmap';
 
 interface WrappedSlidesProps {
@@ -32,10 +32,48 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [persona, setPersona] = useState<PersonaResult | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const totalSlides = 7; // Increased from 6
+  
+  // Background Enrichment State
+  const [enrichedData, setEnrichedData] = useState<Omit<EnrichedDataUpdate, 'processedCount' | 'totalCount'>>({
+      topActors: [],
+      topDirectors: [],
+      topGenres: []
+  });
+  const [enrichmentProgress, setEnrichmentProgress] = useState({ processed: 0, total: 0 });
+  
+  const totalSlides = 7;
 
   useEffect(() => {
+    // Generate AI Persona
     generatePersona(stats).then(setPersona);
+
+    // Start background enrichment stream
+    let isMounted = true;
+    
+    const startStreaming = async () => {
+        await streamEnrichedData(
+            stats.allFilms,
+            (data) => {
+                if (isMounted) {
+                    setEnrichedData({
+                        topActors: data.topActors,
+                        topDirectors: data.topDirectors,
+                        topGenres: data.topGenres
+                    });
+                    setEnrichmentProgress({ processed: data.processedCount, total: data.totalCount });
+                }
+            },
+            () => !isMounted // Check if unmounted
+        );
+    };
+
+    if (stats.allFilms && stats.allFilms.length > 0) {
+        startStreaming();
+    }
+
+    return () => {
+        isMounted = false;
+    };
   }, [stats]);
 
   useEffect(() => {
@@ -333,15 +371,24 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
 
   // --- SLIDE 6: CAST & CREW (Bauhaus Color Mix) ---
   const SlideCastCrew = () => (
-    <div className="flex flex-col min-h-full py-12 px-4 md:px-8 bg-bauhaus-bg text-bauhaus-black">
+    <div className="flex flex-col min-h-full py-12 px-4 md:px-8 bg-bauhaus-bg text-bauhaus-black relative">
       <div className="max-w-6xl mx-auto w-full h-full flex flex-col">
-        <h3 className="text-4xl md:text-6xl font-black uppercase mb-8 md:mb-12 border-b-4 border-black pb-4">
-            The <span className="text-bauhaus-blue">A-List</span>
-        </h3>
+        <div className="flex justify-between items-end mb-8 md:mb-12 border-b-4 border-black pb-4">
+            <h3 className="text-4xl md:text-6xl font-black uppercase">
+                The <span className="text-bauhaus-blue">A-List</span>
+            </h3>
+            {enrichmentProgress.processed < enrichmentProgress.total && (
+                <div className="flex items-center gap-2 text-xs md:text-sm font-bold bg-white px-3 py-1 border-2 border-black animate-pulse">
+                    <Loader2 className="animate-spin w-4 h-4" />
+                    <span>Analyzing: {Math.round((enrichmentProgress.processed / enrichmentProgress.total) * 100)}%</span>
+                </div>
+            )}
+        </div>
 
-        {!stats.topActors ? (
-           <div className="flex-1 flex items-center justify-center border-4 border-black border-dashed opacity-50">
-             <div className="text-xl font-bold uppercase">Data Unavailable</div>
+        {enrichedData.topActors.length === 0 ? (
+           <div className="flex-1 flex flex-col items-center justify-center border-4 border-black border-dashed opacity-50 space-y-4">
+             <Database className="w-16 h-16 animate-bounce" />
+             <div className="text-xl font-bold uppercase">Mining Database...</div>
            </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 flex-1">
@@ -353,12 +400,13 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
                     <h4 className="text-2xl md:text-4xl font-black uppercase">Most Watched Stars</h4>
                 </div>
                 <div className="space-y-4">
-                    {stats.topActors?.map((actor, idx) => (
+                    {enrichedData.topActors.map((actor, idx) => (
                         <motion.div 
+                            layoutId={`actor-${actor.name}`}
                             key={actor.name}
                             initial={{ x: -20, opacity: 0 }}
-                            whileInView={{ x: 0, opacity: 1 }}
-                            transition={{ delay: idx * 0.1 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
                             className="bg-white border-4 border-black p-4 flex items-center gap-4 shadow-hard-sm hover:shadow-hard-md hover:-translate-y-1 transition-all"
                         >
                             <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 border-2 border-black overflow-hidden bg-gray-200">
@@ -389,12 +437,12 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
                         <h4 className="text-2xl md:text-3xl font-black uppercase">Top Directors</h4>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
-                         {stats.topDirectors?.slice(0, 3).map((director, idx) => (
+                         {enrichedData.topDirectors.slice(0, 3).map((director, idx) => (
                              <motion.div
+                                layoutId={`director-${director.name}`}
                                 key={director.name}
                                 initial={{ x: 20, opacity: 0 }}
-                                whileInView={{ x: 0, opacity: 1 }}
-                                transition={{ delay: idx * 0.1 + 0.2 }}
+                                animate={{ x: 0, opacity: 1 }}
                                 className="bg-bauhaus-black text-white p-4 border-2 border-transparent flex justify-between items-center"
                              >
                                 <span className="font-bold text-lg">{director.name}</span>
@@ -411,12 +459,12 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
                         <h4 className="text-2xl md:text-3xl font-black uppercase">Genre Mix</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {stats.topGenres?.map((genre, idx) => (
+                        {enrichedData.topGenres.map((genre, idx) => (
                              <motion.div
+                                layoutId={`genre-${genre.name}`}
                                 key={genre.name}
                                 initial={{ scale: 0.8, opacity: 0 }}
-                                whileInView={{ scale: 1, opacity: 1 }}
-                                transition={{ delay: idx * 0.05 }}
+                                animate={{ scale: 1, opacity: 1 }}
                                 className={`
                                     border-2 border-black px-3 py-1 font-bold uppercase text-sm md:text-base
                                     ${idx === 0 ? 'bg-bauhaus-red text-white text-xl p-4 shadow-hard-sm' : ''}

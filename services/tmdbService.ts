@@ -23,7 +23,6 @@ export const getMoviePoster = async (title: string, year: string): Promise<strin
   }
 };
 
-// New interfaces for internal TMDB use
 interface TMDBMovieDetail {
   id: number;
   title: string;
@@ -34,10 +33,6 @@ interface TMDBMovieDetail {
   };
 }
 
-/**
- * Fetches details for a single movie by title/year.
- * Includes Credits and Genres.
- */
 const getMovieDetails = async (title: string, year: string): Promise<TMDBMovieDetail | null> => {
   const apiKey = TMDB_API_KEY;
   if (!apiKey) return null;
@@ -62,37 +57,54 @@ const getMovieDetails = async (title: string, year: string): Promise<TMDBMovieDe
   }
 };
 
+export interface EnrichedDataUpdate {
+    topActors: { name: string; count: number; image?: string }[];
+    topDirectors: { name: string; count: number; image?: string }[];
+    topGenres: { name: string; count: number }[];
+    processedCount: number;
+    totalCount: number;
+}
+
 /**
- * Batches requests to avoid rate limiting. 
- * Processes a list of films and returns aggregated stats.
+ * Streams enriched data for all films.
+ * Processes in small batches to respect TMDB rate limits (approx 40 req/s max, we stay safer).
+ * Invokes onUpdate callback after every batch.
  */
-export const fetchEnrichedData = async (
+export const streamEnrichedData = async (
   films: { title: string; year: string }[], 
-  onProgress?: (count: number, total: number) => void
+  onUpdate: (data: EnrichedDataUpdate) => void,
+  shouldStop: () => boolean // Callback to check if we should abort (e.g. unmount)
 ) => {
   const actorCounts: Record<string, { count: number; image: string | null }> = {};
   const directorCounts: Record<string, { count: number; image: string | null }> = {};
   const genreCounts: Record<string, number> = {};
   
-  let processed = 0;
-  const total = films.length;
+  // Batch Size 5. 
+  // Each film = ~2 calls. 5 films = ~10 calls.
+  // Delay 500ms. = ~20 calls/sec. Safe.
+  const BATCH_SIZE = 5;
+  const DELAY_MS = 500;
 
-  // Process in chunks of 5 to be nice to the API
-  const CHUNK_SIZE = 5;
+  let processed = 0;
   
-  for (let i = 0; i < films.length; i += CHUNK_SIZE) {
-    const chunk = films.slice(i, i + CHUNK_SIZE);
+  for (let i = 0; i < films.length; i += BATCH_SIZE) {
+    if (shouldStop()) break;
+
+    const chunk = films.slice(i, i + BATCH_SIZE);
     
-    const promises = chunk.map(async (film) => {
-      const details = await getMovieDetails(film.title, film.year);
+    // Fetch chunk in parallel
+    const promises = chunk.map(film => getMovieDetails(film.title, film.year));
+    const results = await Promise.all(promises);
+
+    results.forEach(details => {
       if (details) {
         // Aggregate Genres
         details.genres.forEach(g => {
           genreCounts[g.name] = (genreCounts[g.name] || 0) + 1;
         });
 
-        // Aggregate Actors (Limit to top 5 billed cast per movie to avoid extras)
-        details.credits.cast.slice(0, 5).forEach(actor => {
+        // Aggregate Actors (Limit to top 10 billed to capture ensemble, but avoid extras)
+        details.credits.cast.slice(0, 10).forEach(actor => {
           if (!actorCounts[actor.name]) {
             actorCounts[actor.name] = { count: 0, image: actor.profile_path };
           }
@@ -111,37 +123,41 @@ export const fetchEnrichedData = async (
       }
     });
 
-    await Promise.all(promises);
     processed += chunk.length;
-    if (onProgress) onProgress(Math.min(processed, total), total);
-    
-    // Small delay between chunks
-    await new Promise(r => setTimeout(r, 200));
+
+    // Calculate Top X arrays for the update
+    const topActors = Object.entries(actorCounts)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 5) // Top 5
+        .map(([name, data]) => ({ 
+            name, 
+            count: data.count, 
+            image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined 
+        }));
+
+    const topDirectors = Object.entries(directorCounts)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 5)
+        .map(([name, data]) => ({ 
+            name, 
+            count: data.count, 
+            image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined 
+        }));
+
+    const topGenres = Object.entries(genreCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8) // Top 8
+        .map(([name, count]) => ({ name, count }));
+
+    onUpdate({
+        topActors,
+        topDirectors,
+        topGenres,
+        processedCount: processed,
+        totalCount: films.length
+    });
+
+    // Rate Limit Delay
+    await new Promise(r => setTimeout(r, DELAY_MS));
   }
-
-  // Format and sort results
-  const topActors = Object.entries(actorCounts)
-    .sort((a, b) => b[1].count - a[1].count)
-    .slice(0, 5)
-    .map(([name, data]) => ({ 
-        name, 
-        count: data.count, 
-        image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined 
-    }));
-
-  const topDirectors = Object.entries(directorCounts)
-    .sort((a, b) => b[1].count - a[1].count)
-    .slice(0, 5)
-    .map(([name, data]) => ({ 
-        name, 
-        count: data.count, 
-        image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined 
-    }));
-
-  const topGenres = Object.entries(genreCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([name, count]) => ({ name, count }));
-
-  return { topActors, topDirectors, topGenres };
 };

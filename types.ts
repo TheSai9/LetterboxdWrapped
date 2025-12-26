@@ -39,7 +39,10 @@ export interface ProcessedStats {
   moviesPerWeekAvg: number;
   year: number; // The analysis year
   
-  // New Enriched Data
+  // The full list needed for background enrichment
+  allFilms: { title: string; year: string }[];
+
+  // New Enriched Data (Optional, populated progressively)
   topActors?: { name: string; count: number; image?: string }[];
   topDirectors?: { name: string; count: number; image?: string }[];
   topGenres?: { name: string; count: number }[];

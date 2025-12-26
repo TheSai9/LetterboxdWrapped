@@ -39,6 +39,9 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
   // Initialize day counts to 0 to ensure chart order
   days.forEach(d => dayCounts[d] = 0);
 
+  // Prepare list for enrichment
+  const allFilms: { title: string; year: string }[] = [];
+
   yearDiary.forEach(entry => {
     const date = new Date(entry["Watched Date"]);
     if (isNaN(date.getTime())) return;
@@ -51,8 +54,7 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     dayCounts[day] = (dayCounts[day] || 0) + 1;
     dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
 
-    // Decade Calc
-    // Try to find the year property case-insensitively if exact match fails
+    // Decade Calc & Film extraction
     let yearStr = entry.Year;
     if (!yearStr) {
         const key = Object.keys(entry).find(k => k.toLowerCase() === 'year');
@@ -60,6 +62,12 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     }
     
     yearStr = yearStr ? yearStr.trim() : "";
+    
+    // Add to allFilms list
+    allFilms.push({
+        title: entry.Name,
+        year: yearStr
+    });
     
     if (yearStr && !isNaN(parseInt(yearStr))) {
         const releaseYear = parseInt(yearStr);
@@ -162,5 +170,6 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     lastFilm,
     uniqueFilmsCount: totalWatched - rewatchCount,
     moviesPerWeekAvg: parseFloat((totalWatched / 52).toFixed(1)),
+    allFilms: allFilms
   };
 };

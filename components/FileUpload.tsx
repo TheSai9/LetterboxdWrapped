@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Play, Square, Triangle, Circle, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Square, Circle } from 'lucide-react';
 import { parseCSV } from '../services/csvParser';
 import { processData } from '../services/statsService';
-import { fetchEnrichedData } from '../services/tmdbService';
 import { DiaryEntry, RatingEntry, ProcessedStats } from '../types';
 
 interface FileUploadProps {
@@ -15,10 +14,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
   const [ratingsData, setRatingsData] = useState<RatingEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   
-  // Loading States
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'diary' | 'ratings') => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -54,52 +49,21 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
       return;
     }
 
-    setIsProcessing(true);
     setError(null);
 
     try {
-        // 1. Basic Processing
+        // 1. Basic Processing only
         const basicStats = processData(diaryData, ratingsData);
         if (!basicStats) {
             throw new Error("Could not process stats. Check your data.");
         }
 
-        // 2. Select films for Enrichment (Top Rated + Some Recent)
-        // We limit this to ~40 films to avoid long wait times/rate limits
-        const filmsToAnalyze = [...basicStats.topRatedFilms]
-            .map(r => ({ title: r.Name, year: r.Year }))
-            .slice(0, 30); // Take top 30 rated
-
-        // Add 10 most recent if not in top rated
-        let addedCount = 0;
-        for (let i = 0; i < diaryData.length && addedCount < 10; i++) {
-             const entry = diaryData[diaryData.length - 1 - i]; // Recent are usually at end or check date
-             // Simple check to avoid dupes (rough)
-             if (!filmsToAnalyze.find(f => f.title === entry.Name)) {
-                filmsToAnalyze.push({ title: entry.Name, year: entry.Year });
-                addedCount++;
-             }
-        }
-
-        setProgress({ current: 0, total: filmsToAnalyze.length });
-
-        // 3. Fetch Enriched Data
-        const enriched = await fetchEnrichedData(filmsToAnalyze, (current, total) => {
-            setProgress({ current, total });
-        });
-
-        // 4. Merge Data
-        const finalStats: ProcessedStats = {
-            ...basicStats,
-            ...enriched
-        };
-
-        onDataProcessed(finalStats);
+        // 2. Immediately pass data to parent. Enrichment happens in background.
+        onDataProcessed(basicStats);
 
     } catch (err: any) {
         console.error(err);
         setError(err.message || "An error occurred during processing.");
-        setIsProcessing(false);
     }
   };
 
@@ -191,26 +155,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
 
             <button
               onClick={handleGenerate}
-              disabled={diaryData.length === 0 || isProcessing}
+              disabled={diaryData.length === 0}
               className={`w-full py-5 text-xl font-black uppercase tracking-widest border-2 border-bauhaus-black shadow-hard-md transition-all
-                ${diaryData.length === 0 || isProcessing
+                ${diaryData.length === 0
                   ? 'bg-bauhaus-muted text-gray-500 cursor-not-allowed shadow-none' 
                   : 'bg-bauhaus-yellow text-bauhaus-black hover:-translate-y-1 hover:shadow-hard-lg active:translate-x-1 active:translate-y-1 active:shadow-none'
                 }`}
             >
-              {isProcessing ? (
-                  <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="animate-spin" />
-                      <span>Enriching Data ({progress ? `${Math.round((progress.current / progress.total) * 100)}%` : '0%'})</span>
-                  </div>
-              ) : (
-                  "Construct Analysis"
-              )}
+              Construct Analysis
             </button>
-            
-            {isProcessing && (
-                <p className="text-center text-xs text-gray-500 font-medium">Fetching details from TMDB to determine your top actors & genres...</p>
-            )}
          </div>
       </div>
     </div>
