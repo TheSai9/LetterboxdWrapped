@@ -44,12 +44,12 @@ export interface ProcessedStats {
   topMonth: string;
   topDayOfWeek: string;
   averageRating: number;
-  ratingDistribution: { rating: string; count: number }[];
-  monthlyDistribution: { month: string; count: number }[];
+  ratingDistribution: { rating: string; count: number; movies: SimpleMovie[] }[];
+  monthlyDistribution: { month: string; count: number; movies: SimpleMovie[] }[];
   dailyActivity: { date: string; count: number }[];
   dailyEntries: Record<string, DailyEntryDetail[]>; 
-  dayOfWeekDistribution: { day: string; count: number }[];
-  decadeDistribution: { decade: string; count: number }[];
+  dayOfWeekDistribution: { day: string; count: number; movies: SimpleMovie[] }[];
+  decadeDistribution: { decade: string; count: number; movies: SimpleMovie[] }[];
   rewatchCount: number;
   rewatchedFilms: SimpleMovie[]; // Added
   topRatedFilms: RatingEntry[]; // Top 5

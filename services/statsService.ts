@@ -5,7 +5,6 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
   if (diary.length === 0) return null;
 
   // Filter for the most recent complete year present in the data or the current year
-  // Robust date parsing needed here
   const sortedDiary = [...diary].sort((a, b) => {
       const dateA = new Date(a["Watched Date"]);
       const dateB = new Date(b["Watched Date"]);
@@ -28,17 +27,20 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
   // Estimate runtime: approx 105 mins per movie
   const totalRuntimeHours = Math.round((totalWatched * 105) / 60);
 
-  // 2. Temporal Analysis
-  const monthCounts: Record<string, number> = {};
-  const dayCounts: Record<string, number> = {};
-  const dateCounts: Record<string, number> = {};
-  const dailyEntries: Record<string, DailyEntryDetail[]> = {}; // Store details per day
-  const decadeCounts: Record<string, number> = {};
-
+  // 2. Temporal Analysis & Aggregation Buckets
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  // Initialize day counts to 0 to ensure chart order
-  days.forEach(d => dayCounts[d] = 0);
+  
+  const monthData: Record<string, { count: number; movies: SimpleMovie[] }> = {};
+  months.forEach(m => monthData[m] = { count: 0, movies: [] });
+
+  const dayData: Record<string, { count: number; movies: SimpleMovie[] }> = {};
+  days.forEach(d => dayData[d] = { count: 0, movies: [] });
+
+  const decadeData: Record<string, { count: number; movies: SimpleMovie[] }> = {};
+  
+  const dateCounts: Record<string, number> = {};
+  const dailyEntries: Record<string, DailyEntryDetail[]> = {}; // Store details per day
 
   // Prepare list for enrichment
   const allFilms: SimpleMovie[] = [];
@@ -52,34 +54,22 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     const day = days[date.getDay()];
     const dateStr = entry["Watched Date"];
 
-    monthCounts[month] = (monthCounts[month] || 0) + 1;
-    dayCounts[day] = (dayCounts[day] || 0) + 1;
     dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
 
-    // Decade Calc & Film extraction
+    // Year extraction logic
     let yearStr: string | undefined = entry.Year;
-
-    // Fallback 1: Case-insensitive search for "Year" key
     if (!yearStr) {
         const key = Object.keys(entry).find(k => k.toLowerCase() === 'year');
         if (key) yearStr = (entry as any)[key];
     }
-    
-    // Fallback 2: Explicitly grab the 3rd column (index 2) as requested
     if (!yearStr) {
         const vals = Object.values(entry);
-        if (vals.length > 2) {
-             yearStr = vals[2];
-        }
+        if (vals.length > 2) yearStr = vals[2];
     }
-
-    // Clean year string (extract first 4 digit sequence found)
     let cleanYear = "";
     if (yearStr) {
         const match = yearStr.toString().match(/(\d{4})/);
-        if (match) {
-            cleanYear = match[1];
-        }
+        if (match) cleanYear = match[1];
     }
     
     const simpleMovie: SimpleMovie = {
@@ -96,6 +86,16 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
         rewatchedFilms.push(simpleMovie);
     }
 
+    // Add to Monthly/Daily Aggregations
+    if (monthData[month]) {
+        monthData[month].count++;
+        monthData[month].movies.push(simpleMovie);
+    }
+    if (dayData[day]) {
+        dayData[day].count++;
+        dayData[day].movies.push(simpleMovie);
+    }
+
     // Add to daily entries
     if (!dailyEntries[dateStr]) {
         dailyEntries[dateStr] = [];
@@ -107,31 +107,47 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
         uri: entry["Letterboxd URI"]
     });
     
+    // Decade Logic
     if (cleanYear) {
         const releaseYear = parseInt(cleanYear);
-        // Basic sanity check for year (e.g., between 1880 and current year + 2)
         if (releaseYear > 1880 && releaseYear <= new Date().getFullYear() + 2) {
             const decade = Math.floor(releaseYear / 10) * 10;
             const decadeStr = `${decade}s`;
-            decadeCounts[decadeStr] = (decadeCounts[decadeStr] || 0) + 1;
+            if (!decadeData[decadeStr]) {
+                decadeData[decadeStr] = { count: 0, movies: [] };
+            }
+            decadeData[decadeStr].count++;
+            decadeData[decadeStr].movies.push(simpleMovie);
         }
     }
   });
 
-  const monthlyDistribution = months.map(m => ({ month: m, count: monthCounts[m] || 0 }));
-  const dayOfWeekDistribution = days.map(d => ({ day: d, count: dayCounts[d] || 0 }));
-  
-  const decadeDistribution = Object.entries(decadeCounts)
-    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
-    .map(([decade, count]) => ({ decade, count }));
+  const monthlyDistribution = months.map(m => ({ 
+      month: m, 
+      count: monthData[m].count,
+      movies: monthData[m].movies 
+  }));
 
-  const topMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "None";
-  const topDayOfWeek = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "None";
+  const dayOfWeekDistribution = days.map(d => ({ 
+      day: d, 
+      count: dayData[d].count,
+      movies: dayData[d].movies 
+  }));
+  
+  const decadeDistribution = Object.entries(decadeData)
+    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+    .map(([decade, data]) => ({ 
+        decade, 
+        count: data.count,
+        movies: data.movies 
+    }));
+
+  const topMonth = Object.entries(monthData).sort((a, b) => b[1].count - a[1].count)[0]?.[0] || "None";
+  const topDayOfWeek = Object.entries(dayData).sort((a, b) => b[1].count - a[1].count)[0]?.[0] || "None";
   
   const busyDayEntry = Object.entries(dateCounts).sort((a, b) => b[1] - a[1])[0];
   const busiestDay = { date: busyDayEntry?.[0] || "", count: busyDayEntry?.[1] || 0 };
 
-  // Prepare Daily Activity for Heatmap
   const dailyActivity = Object.entries(dateCounts).map(([date, count]) => ({ date, count }));
 
   // 3. Streak Calculation
@@ -161,20 +177,34 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
   const yearRatings = ratings.filter(r => r.Date.startsWith(targetYear.toString()));
   
   let ratingSum = 0;
-  const ratingDistMap: Record<string, number> = {};
+  const ratingData: Record<string, { count: number; movies: SimpleMovie[] }> = {};
   
   yearRatings.forEach(r => {
     const val = parseFloat(r.Rating);
     if (!isNaN(val)) {
       ratingSum += val;
-      ratingDistMap[r.Rating] = (ratingDistMap[r.Rating] || 0) + 1;
+      if (!ratingData[r.Rating]) {
+          ratingData[r.Rating] = { count: 0, movies: [] };
+      }
+      ratingData[r.Rating].count++;
+      
+      // Create SimpleMovie from RatingEntry
+      ratingData[r.Rating].movies.push({
+          title: r.Name,
+          year: r.Year,
+          rating: r.Rating
+      });
     }
   });
 
   const averageRating = yearRatings.length > 0 ? parseFloat((ratingSum / yearRatings.length).toFixed(2)) : 0;
-  const ratingDistribution = Object.entries(ratingDistMap)
+  const ratingDistribution = Object.entries(ratingData)
     .sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))
-    .map(([rating, count]) => ({ rating, count }));
+    .map(([rating, data]) => ({ 
+        rating, 
+        count: data.count,
+        movies: data.movies 
+    }));
 
   // 5. Rewatches
   const rewatchCount = yearDiary.filter(d => d.Rewatch === "Yes").length;
@@ -184,7 +214,7 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     .sort((a, b) => parseFloat(b.Rating) - parseFloat(a.Rating))
     .slice(0, 5);
   
-  // Fallback for first/last film if data is sparse
+  // Fallback for first/last film
   const firstFilm = yearDiary.length > 0 ? yearDiary[yearDiary.length - 1].Name : "N/A";
   const lastFilm = yearDiary.length > 0 ? yearDiary[0].Name : "N/A";
 

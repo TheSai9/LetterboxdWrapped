@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProcessedStats, PersonaResult, SimpleMovie, EnrichedItem } from '../types';
@@ -55,7 +54,10 @@ const SlideIntro = React.memo(({ year }: { year: number }) => (
   </div>
 ));
 
-const SlideVolume = React.memo(({ stats }: { stats: ProcessedStats }) => (
+const SlideVolume = React.memo(({ stats }: { stats: ProcessedStats }) => {
+  const [selectedEra, setSelectedEra] = useState<{title: string, movies: SimpleMovie[]} | null>(null);
+
+  return (
   <div className="flex flex-col min-h-full py-12 px-4 md:px-8 bg-bauhaus-yellow text-bauhaus-black">
       <div className="max-w-6xl mx-auto w-full h-full flex flex-col justify-center">
           <h3 className="text-4xl md:text-6xl font-black uppercase mb-8 md:mb-12 border-b-4 border-black pb-4">Volume Analysis</h3>
@@ -81,26 +83,53 @@ const SlideVolume = React.memo(({ stats }: { stats: ProcessedStats }) => (
                 <div className="flex items-center gap-2 mb-6 border-b-2 border-black pb-2">
                     <div className="w-4 h-4 bg-black"></div>
                     <h4 className="text-2xl font-black uppercase">Eras Distribution</h4>
+                    <span className="text-xs font-bold uppercase text-gray-500 ml-auto">(Click bar to view films)</span>
                 </div>
                 <div className="w-full h-64">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={stats.decadeDistribution}>
                             <XAxis dataKey="decade" tick={{fill: '#121212', fontWeight: 700}} axisLine={{stroke: '#121212', strokeWidth: 2}} tickLine={false} />
                             <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                            <Bar dataKey="count" fill="#121212" radius={0}>
+                            <Bar 
+                                dataKey="count" 
+                                fill="#121212" 
+                                radius={0}
+                                onClick={(data: any) => setSelectedEra({ title: `Films from the ${data.decade}`, movies: data.movies })}
+                                className="cursor-pointer"
+                            >
                                 {stats.decadeDistribution.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#1040C0' : '#D02020'} stroke="#121212" strokeWidth={2} />
+                                    <Cell 
+                                        key={`cell-${index}`} 
+                                        fill={index % 2 === 0 ? '#1040C0' : '#D02020'} 
+                                        stroke="#121212" 
+                                        strokeWidth={2} 
+                                        className="hover:opacity-80 transition-opacity"
+                                    />
                                 ))}
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
+                 <AnimatePresence>
+                    {selectedEra && (
+                        <MovieListPanel 
+                            title={selectedEra.title}
+                            movies={selectedEra.movies}
+                            onClose={() => setSelectedEra(null)}
+                            className="mt-4"
+                        />
+                    )}
+                </AnimatePresence>
             </div>
       </div>
   </div>
-));
+  );
+});
 
-const SlideRhythm = React.memo(({ stats }: { stats: ProcessedStats }) => (
+const SlideRhythm = React.memo(({ stats }: { stats: ProcessedStats }) => {
+  const [selectedMetric, setSelectedMetric] = useState<{title: string, movies: SimpleMovie[]} | null>(null);
+
+  return (
   <div className="flex flex-col min-h-full py-12 px-4 md:px-8 bg-white text-bauhaus-black">
       <div className="max-w-5xl mx-auto w-full">
           <h3 className="text-4xl md:text-6xl font-black uppercase mb-8">Rhythm &<br/><span className="text-bauhaus-red">Patterns</span></h3>
@@ -146,10 +175,21 @@ const SlideRhythm = React.memo(({ stats }: { stats: ProcessedStats }) => (
                       <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats.monthlyDistribution} margin={{top: 15, right: 5, left: 5, bottom: 0}}>
                               <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                              <Bar dataKey="count" stroke="#121212" strokeWidth={2} animationDuration={1000}>
+                              <Bar 
+                                dataKey="count" 
+                                stroke="#121212" 
+                                strokeWidth={2} 
+                                animationDuration={1000}
+                                onClick={(data: any) => setSelectedMetric({ title: `Films in ${data.month}`, movies: data.movies })}
+                                className="cursor-pointer"
+                              >
                                   <LabelList dataKey="count" position="top" style={{ fill: '#121212', fontWeight: 800, fontSize: '10px' }} />
                                   {stats.monthlyDistribution.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.month === stats.topMonth ? '#F0C020' : '#E0E0E0'} />
+                                      <Cell 
+                                        key={`cell-${index}`} 
+                                        fill={entry.month === stats.topMonth ? '#F0C020' : '#E0E0E0'} 
+                                        className="hover:fill-bauhaus-red transition-colors"
+                                      />
                                   ))}
                               </Bar>
                               <XAxis dataKey="month" tick={{fontSize: 10, fontWeight: 700}} interval={0} tickLine={false} axisLine={false} />
@@ -165,10 +205,21 @@ const SlideRhythm = React.memo(({ stats }: { stats: ProcessedStats }) => (
                       <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats.dayOfWeekDistribution} margin={{top: 15, right: 5, left: 5, bottom: 0}}>
                               <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                               <Bar dataKey="count" stroke="#121212" strokeWidth={2} animationDuration={1000}>
+                               <Bar 
+                                    dataKey="count" 
+                                    stroke="#121212" 
+                                    strokeWidth={2} 
+                                    animationDuration={1000}
+                                    onClick={(data: any) => setSelectedMetric({ title: `Films on ${data.day}s`, movies: data.movies })}
+                                    className="cursor-pointer"
+                                >
                                   <LabelList dataKey="count" position="top" style={{ fill: '#121212', fontWeight: 800, fontSize: '10px' }} />
                                   {stats.dayOfWeekDistribution.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={entry.day === stats.topDayOfWeek ? '#1040C0' : '#E0E0E0'} />
+                                      <Cell 
+                                        key={`cell-${index}`} 
+                                        fill={entry.day === stats.topDayOfWeek ? '#1040C0' : '#E0E0E0'} 
+                                        className="hover:fill-bauhaus-yellow transition-colors"
+                                      />
                                   ))}
                               </Bar>
                               <XAxis dataKey="day" tickFormatter={(val) => val.substring(0,1)} tick={{fontSize: 10, fontWeight: 700}} tickLine={false} axisLine={false} />
@@ -177,12 +228,28 @@ const SlideRhythm = React.memo(({ stats }: { stats: ProcessedStats }) => (
                   </div>
               </div>
           </div>
+          
+          <AnimatePresence>
+            {selectedMetric && (
+                <MovieListPanel 
+                    title={selectedMetric.title}
+                    movies={selectedMetric.movies}
+                    onClose={() => setSelectedMetric(null)}
+                    className="mt-4"
+                />
+            )}
+          </AnimatePresence>
+          
           <div className="h-20"></div>
       </div>
   </div>
-));
+  );
+});
 
-const SlideRatings = React.memo(({ stats }: { stats: ProcessedStats }) => (
+const SlideRatings = React.memo(({ stats }: { stats: ProcessedStats }) => {
+  const [selectedRating, setSelectedRating] = useState<{title: string, movies: SimpleMovie[]} | null>(null);
+
+  return (
   <div className="flex flex-col min-h-full py-12 px-4 md:px-6 bg-bauhaus-blue text-white">
        <div className="max-w-5xl mx-auto w-full h-full flex flex-col justify-center">
           <h3 className="text-5xl md:text-6xl font-black uppercase mb-8 md:mb-12 text-center md:text-left leading-none">Critical<br/>Analysis</h3>
@@ -200,29 +267,55 @@ const SlideRatings = React.memo(({ stats }: { stats: ProcessedStats }) => (
                </div>
            </div>
 
-           <div className="w-full h-64 md:h-80 bg-bauhaus-yellow p-4 md:p-8 border-4 border-black shadow-hard-md">
-              <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.ratingDistribution} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
-                      <XAxis 
-                          dataKey="rating" 
-                          tick={{fill: '#121212', fontWeight: 900, fontSize: 14}} 
-                          axisLine={{stroke: '#121212', strokeWidth: 4}} 
-                          tickLine={false} 
-                          dy={10}
-                      />
-                      <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                      <Bar dataKey="count" fill="#fff" stroke="#121212" strokeWidth={2} radius={0} animationDuration={1000}>
-                           <LabelList dataKey="count" position="top" style={{ fill: '#121212', fontWeight: 900, fontSize: '14px' }} offset={10} />
-                           {stats.ratingDistribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={parseFloat(entry.rating) >= 4 ? '#D02020' : '#FFFFFF'} />
-                          ))}
-                      </Bar>
-                  </BarChart>
-              </ResponsiveContainer>
+           <div className="w-full bg-bauhaus-yellow p-4 md:p-8 border-4 border-black shadow-hard-md">
+              <div className="h-64 md:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.ratingDistribution} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                        <XAxis 
+                            dataKey="rating" 
+                            tick={{fill: '#121212', fontWeight: 900, fontSize: 14}} 
+                            axisLine={{stroke: '#121212', strokeWidth: 4}} 
+                            tickLine={false} 
+                            dy={10}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                        <Bar 
+                            dataKey="count" 
+                            fill="#fff" 
+                            stroke="#121212" 
+                            strokeWidth={2} 
+                            radius={0} 
+                            animationDuration={1000}
+                            onClick={(data: any) => setSelectedRating({ title: `Rated ${data.rating} Stars`, movies: data.movies })}
+                            className="cursor-pointer"
+                        >
+                            <LabelList dataKey="count" position="top" style={{ fill: '#121212', fontWeight: 900, fontSize: '14px' }} offset={10} />
+                            {stats.ratingDistribution.map((entry, index) => (
+                                <Cell 
+                                    key={`cell-${index}`} 
+                                    fill={parseFloat(entry.rating) >= 4 ? '#D02020' : '#FFFFFF'} 
+                                    className="hover:fill-bauhaus-blue transition-colors"
+                                />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <AnimatePresence>
+                {selectedRating && (
+                    <MovieListPanel 
+                        title={selectedRating.title}
+                        movies={selectedRating.movies}
+                        onClose={() => setSelectedRating(null)}
+                        className="mt-4 border-t-4 border-black pt-4"
+                    />
+                )}
+              </AnimatePresence>
           </div>
       </div>
   </div>
-));
+  );
+});
 
 const SlideFavorites = React.memo(({ stats }: { stats: ProcessedStats }) => {
   const [posters, setPosters] = useState<Record<string, string>>({});
