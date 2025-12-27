@@ -1,5 +1,5 @@
 
-import { DiaryEntry, RatingEntry, ProcessedStats } from '../types';
+import { DiaryEntry, RatingEntry, ProcessedStats, DailyEntryDetail } from '../types';
 
 export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): ProcessedStats | null => {
   if (diary.length === 0) return null;
@@ -32,6 +32,7 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
   const monthCounts: Record<string, number> = {};
   const dayCounts: Record<string, number> = {};
   const dateCounts: Record<string, number> = {};
+  const dailyEntries: Record<string, DailyEntryDetail[]> = {}; // Store details per day
   const decadeCounts: Record<string, number> = {};
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -85,6 +86,17 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     allFilms.push({
         title: entry.Name,
         year: cleanYear
+    });
+
+    // Add to daily entries
+    if (!dailyEntries[dateStr]) {
+        dailyEntries[dateStr] = [];
+    }
+    dailyEntries[dateStr].push({
+        name: entry.Name,
+        rating: entry.Rating,
+        year: cleanYear,
+        uri: entry["Letterboxd URI"]
     });
     
     if (cleanYear) {
@@ -178,6 +190,7 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     ratingDistribution,
     monthlyDistribution,
     dailyActivity,
+    dailyEntries,
     dayOfWeekDistribution,
     decadeDistribution,
     rewatchCount,

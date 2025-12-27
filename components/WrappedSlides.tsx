@@ -111,7 +111,11 @@ const SlideRhythm = React.memo(({ stats }: { stats: ProcessedStats }) => (
                <div className="flex items-center justify-between mb-4">
                   <span className="font-bold uppercase bg-bauhaus-yellow px-2 border-2 border-black text-sm">Daily Activity</span>
                </div>
-               <CalendarHeatmap data={stats.dailyActivity} year={stats.year} />
+               <CalendarHeatmap 
+                  data={stats.dailyActivity} 
+                  year={stats.year} 
+                  entries={stats.dailyEntries}
+               />
           </div>
           
           {/* Stats Grid */}

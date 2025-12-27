@@ -18,6 +18,13 @@ export interface RatingEntry {
   Rating: string;
 }
 
+export interface DailyEntryDetail {
+    name: string;
+    year: string;
+    rating: string;
+    uri: string;
+}
+
 export interface ProcessedStats {
   totalWatched: number;
   totalRuntimeHours: number; // Est
@@ -27,6 +34,7 @@ export interface ProcessedStats {
   ratingDistribution: { rating: string; count: number }[];
   monthlyDistribution: { month: string; count: number }[];
   dailyActivity: { date: string; count: number }[];
+  dailyEntries: Record<string, DailyEntryDetail[]>; // New field for detailed daily data
   dayOfWeekDistribution: { day: string; count: number }[];
   decadeDistribution: { decade: string; count: number }[];
   rewatchCount: number;
