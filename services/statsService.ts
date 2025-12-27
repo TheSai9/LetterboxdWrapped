@@ -1,5 +1,5 @@
 
-import { DiaryEntry, RatingEntry, ProcessedStats, DailyEntryDetail } from '../types';
+import { DiaryEntry, RatingEntry, ProcessedStats, DailyEntryDetail, SimpleMovie } from '../types';
 
 export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): ProcessedStats | null => {
   if (diary.length === 0) return null;
@@ -41,7 +41,8 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
   days.forEach(d => dayCounts[d] = 0);
 
   // Prepare list for enrichment
-  const allFilms: { title: string; year: string }[] = [];
+  const allFilms: SimpleMovie[] = [];
+  const rewatchedFilms: SimpleMovie[] = [];
 
   yearDiary.forEach(entry => {
     const date = new Date(entry["Watched Date"]);
@@ -65,7 +66,6 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     }
     
     // Fallback 2: Explicitly grab the 3rd column (index 2) as requested
-    // Object.values returns values in column order for CSV parsed objects
     if (!yearStr) {
         const vals = Object.values(entry);
         if (vals.length > 2) {
@@ -82,11 +82,19 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
         }
     }
     
-    // Add to allFilms list
-    allFilms.push({
+    const simpleMovie: SimpleMovie = {
         title: entry.Name,
-        year: cleanYear
-    });
+        year: cleanYear,
+        rating: entry.Rating
+    };
+
+    // Add to allFilms list
+    allFilms.push(simpleMovie);
+
+    // Add to Rewatches
+    if (entry.Rewatch === "Yes") {
+        rewatchedFilms.push(simpleMovie);
+    }
 
     // Add to daily entries
     if (!dailyEntries[dateStr]) {
@@ -194,6 +202,7 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
     dayOfWeekDistribution,
     decadeDistribution,
     rewatchCount,
+    rewatchedFilms,
     topRatedFilms,
     longestStreak: maxStreak,
     busiestDay,

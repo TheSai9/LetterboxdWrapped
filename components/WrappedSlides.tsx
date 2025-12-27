@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ProcessedStats, PersonaResult } from '../types';
+import { ProcessedStats, PersonaResult, SimpleMovie, EnrichedItem } from '../types';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell, LabelList } from 'recharts';
 import { generatePersona } from '../services/geminiService';
 import { getMoviePoster, streamEnrichedData, EnrichedDataUpdate } from '../services/tmdbService';
-import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database } from 'lucide-react';
+import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database, ChevronDown } from 'lucide-react';
 import CalendarHeatmap from './CalendarHeatmap';
+import MovieListPanel from './MovieListPanel';
 
 interface WrappedSlidesProps {
   stats: ProcessedStats;
@@ -29,8 +30,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // --- SLIDE COMPONENTS DEFINED OUTSIDE TO PREVENT RE-RENDERS ---
-// Using React.memo to strictly prevent re-renders when parent state (enrichment data) changes 
-// but props for these specific slides haven't changed.
 
 const SlideIntro = React.memo(({ year }: { year: number }) => (
   <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 bg-bauhaus-red text-white relative overflow-hidden">
@@ -227,6 +226,7 @@ const SlideRatings = React.memo(({ stats }: { stats: ProcessedStats }) => (
 
 const SlideFavorites = React.memo(({ stats }: { stats: ProcessedStats }) => {
   const [posters, setPosters] = useState<Record<string, string>>({});
+  const [showRewatches, setShowRewatches] = useState(false);
 
   useEffect(() => {
       const fetchPosters = async () => {
@@ -286,9 +286,14 @@ const SlideFavorites = React.memo(({ stats }: { stats: ProcessedStats }) => {
               ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-2xl mx-auto">
-              <div className="bg-bauhaus-red text-white p-4 md:p-6 border-4 border-black text-center shadow-hard-md">
-                   <div className="text-4xl md:text-6xl font-black mb-1 md:mb-2">{stats.rewatchCount}</div>
+          <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-2xl mx-auto relative">
+              <div 
+                  className="bg-bauhaus-red text-white p-4 md:p-6 border-4 border-black text-center shadow-hard-md cursor-pointer hover:bg-red-700 transition-colors"
+                  onClick={() => setShowRewatches(!showRewatches)}
+              >
+                   <div className="text-4xl md:text-6xl font-black mb-1 md:mb-2 flex items-center justify-center gap-2">
+                      {stats.rewatchCount} <ChevronDown size={24} className={`transition-transform ${showRewatches ? 'rotate-180' : ''}`} />
+                   </div>
                    <div className="font-bold uppercase tracking-widest text-xs md:text-base">Rewatches</div>
               </div>
               <div className="bg-bauhaus-blue text-white p-4 md:p-6 border-4 border-black text-center shadow-hard-md">
@@ -296,6 +301,17 @@ const SlideFavorites = React.memo(({ stats }: { stats: ProcessedStats }) => {
                    <div className="font-bold uppercase tracking-widest text-xs md:text-base">New Films</div>
               </div>
           </div>
+
+          <AnimatePresence>
+            {showRewatches && (
+                <MovieListPanel 
+                    title="Rewatched Films"
+                    movies={stats.rewatchedFilms}
+                    onClose={() => setShowRewatches(false)}
+                    className="max-w-2xl mx-auto mt-4"
+                />
+            )}
+          </AnimatePresence>
           
           <div className="mt-8 md:mt-12 pt-8 border-t-4 border-black text-center text-sm md:text-base">
               <span className="font-bold uppercase">First:</span> <span className="font-medium">{stats.firstFilm}</span> <span className="mx-2 text-bauhaus-red font-black">///</span> <span className="font-bold uppercase">Last:</span> <span className="font-medium">{stats.lastFilm}</span>
@@ -305,10 +321,18 @@ const SlideFavorites = React.memo(({ stats }: { stats: ProcessedStats }) => {
   );
 });
 
-// SlideCastCrew cannot be effectively memoized for enrichedData updates as it needs to reflect them,
-// but we can ensure it doesn't cause Layout thrashing. 
-// However, the flashing issue was due to SlideIntro re-mounting.
-const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omit<EnrichedDataUpdate, 'processedCount' | 'totalCount'>, enrichmentProgress: { processed: number, total: number } }) => (
+const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omit<EnrichedDataUpdate, 'processedCount' | 'totalCount'>, enrichmentProgress: { processed: number, total: number } }) => {
+  const [selectedItem, setSelectedItem] = useState<{ title: string, movies: SimpleMovie[] } | null>(null);
+
+  const handleSelect = (title: string, movies: SimpleMovie[]) => {
+    if (selectedItem?.title === title) {
+        setSelectedItem(null);
+    } else {
+        setSelectedItem({ title, movies });
+    }
+  };
+
+  return (
   <div className="flex flex-col min-h-full py-12 px-4 md:px-8 bg-bauhaus-bg text-bauhaus-black relative">
     <div className="max-w-6xl mx-auto w-full h-full flex flex-col">
       <div className="flex justify-between items-end mb-8 md:mb-12 border-b-4 border-black pb-4">
@@ -339,29 +363,41 @@ const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omi
               </div>
               <div className="space-y-4">
                   {enrichedData.topActors.map((actor, idx) => (
-                      <motion.div 
-                          layoutId={`actor-${actor.name}`}
-                          key={actor.name}
-                          initial={{ x: -20, opacity: 0 }}
-                          animate={{ x: 0, opacity: 1 }}
-                          transition={{ duration: 0.5 }}
-                          className="bg-white border-4 border-black p-4 flex items-center gap-4 shadow-hard-sm hover:shadow-hard-md hover:-translate-y-1 transition-all"
-                      >
-                          <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 border-2 border-black overflow-hidden bg-gray-200">
-                              {actor.image ? (
-                                  <img src={actor.image} alt={actor.name} className="w-full h-full object-cover" />
-                              ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-bauhaus-red font-black text-2xl">{idx + 1}</div>
-                              )}
-                          </div>
-                          <div className="flex-1">
-                              <div className="text-lg md:text-2xl font-black uppercase leading-none mb-1">{actor.name}</div>
-                              <div className="text-sm font-bold bg-bauhaus-yellow inline-block px-2 border border-black">
-                                  {actor.count} Films
-                              </div>
-                          </div>
-                          <div className="text-4xl font-black text-gray-200">#{idx + 1}</div>
-                      </motion.div>
+                      <div key={actor.name}>
+                        <motion.div 
+                            layoutId={`actor-${actor.name}`}
+                            onClick={() => handleSelect(actor.name, actor.movies)}
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className={`bg-white border-4 border-black p-4 flex items-center gap-4 shadow-hard-sm hover:shadow-hard-md hover:-translate-y-1 transition-all cursor-pointer ${selectedItem?.title === actor.name ? 'ring-4 ring-bauhaus-yellow' : ''}`}
+                        >
+                            <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 border-2 border-black overflow-hidden bg-gray-200">
+                                {actor.image ? (
+                                    <img src={actor.image} alt={actor.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-bauhaus-red font-black text-2xl">{idx + 1}</div>
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-lg md:text-2xl font-black uppercase leading-none mb-1">{actor.name}</div>
+                                <div className="text-sm font-bold bg-bauhaus-yellow inline-block px-2 border border-black">
+                                    {actor.count} Films
+                                </div>
+                            </div>
+                            <div className="text-4xl font-black text-gray-200">#{idx + 1}</div>
+                        </motion.div>
+                        <AnimatePresence>
+                            {selectedItem?.title === actor.name && (
+                                <MovieListPanel 
+                                    title={`Films with ${actor.name}`}
+                                    movies={actor.movies}
+                                    onClose={() => setSelectedItem(null)}
+                                    className="mb-4"
+                                />
+                            )}
+                        </AnimatePresence>
+                      </div>
                   ))}
               </div>
           </div>
@@ -376,16 +412,28 @@ const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omi
                   </div>
                   <div className="grid grid-cols-1 gap-3">
                        {enrichedData.topDirectors.slice(0, 3).map((director, idx) => (
-                           <motion.div
-                              layoutId={`director-${director.name}`}
-                              key={director.name}
-                              initial={{ x: 20, opacity: 0 }}
-                              animate={{ x: 0, opacity: 1 }}
-                              className="bg-bauhaus-black text-white p-4 border-2 border-transparent flex justify-between items-center"
-                           >
-                              <span className="font-bold text-lg">{director.name}</span>
-                              <span className="font-black text-bauhaus-yellow">{director.count}</span>
-                           </motion.div>
+                           <div key={director.name}>
+                             <motion.div
+                                layoutId={`director-${director.name}`}
+                                onClick={() => handleSelect(director.name, director.movies)}
+                                initial={{ x: 20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                className={`bg-bauhaus-black text-white p-4 border-2 border-transparent flex justify-between items-center cursor-pointer hover:bg-gray-900 ${selectedItem?.title === director.name ? 'border-bauhaus-yellow' : ''}`}
+                             >
+                                <span className="font-bold text-lg">{director.name}</span>
+                                <span className="font-black text-bauhaus-yellow">{director.count}</span>
+                             </motion.div>
+                             <AnimatePresence>
+                                {selectedItem?.title === director.name && (
+                                    <MovieListPanel 
+                                        title={`Directed by ${director.name}`}
+                                        movies={director.movies}
+                                        onClose={() => setSelectedItem(null)}
+                                        className="mb-2"
+                                    />
+                                )}
+                             </AnimatePresence>
+                           </div>
                        ))}
                   </div>
               </div>
@@ -396,15 +444,17 @@ const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omi
                       <Hash className="w-8 h-8 md:w-10 md:h-10 text-bauhaus-yellow fill-black" />
                       <h4 className="text-2xl md:text-3xl font-black uppercase">Genre Mix</h4>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-4">
                       {enrichedData.topGenres.map((genre, idx) => (
                            <motion.div
                               layoutId={`genre-${genre.name}`}
                               key={genre.name}
+                              onClick={() => handleSelect(genre.name, genre.movies)}
                               initial={{ scale: 0.8, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               className={`
-                                  border-2 border-black px-3 py-1 font-bold uppercase text-sm md:text-base
+                                  border-2 border-black px-3 py-1 font-bold uppercase text-sm md:text-base cursor-pointer hover:scale-105 transition-transform
+                                  ${selectedItem?.title === genre.name ? 'ring-2 ring-bauhaus-blue' : ''}
                                   ${idx === 0 ? 'bg-bauhaus-red text-white text-xl p-4 shadow-hard-sm' : ''}
                                   ${idx === 1 ? 'bg-bauhaus-blue text-white text-lg p-3' : ''}
                                   ${idx === 2 ? 'bg-bauhaus-yellow text-black' : ''}
@@ -415,13 +465,25 @@ const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omi
                            </motion.div>
                       ))}
                   </div>
+                  
+                  {/* Global Panel for Genres (Since pills are wrapped) */}
+                  <AnimatePresence>
+                    {selectedItem && enrichedData.topGenres.some(g => g.name === selectedItem.title) && (
+                        <MovieListPanel 
+                            title={`Genre: ${selectedItem.title}`}
+                            movies={selectedItem.movies}
+                            onClose={() => setSelectedItem(null)}
+                        />
+                    )}
+                  </AnimatePresence>
               </div>
           </div>
         </div>
       )}
     </div>
   </div>
-);
+  );
+};
 
 const SlideIdentity = React.memo(({ persona, onReset }: { persona: PersonaResult | null, onReset: () => void }) => (
   <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 md:px-6 bg-bauhaus-yellow text-bauhaus-black relative overflow-hidden">

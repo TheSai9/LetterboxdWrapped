@@ -1,5 +1,6 @@
 
 import { TMDB_API_KEY } from '../config';
+import { SimpleMovie, EnrichedItem } from '../types';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
@@ -58,30 +59,26 @@ const getMovieDetails = async (title: string, year: string): Promise<TMDBMovieDe
 };
 
 export interface EnrichedDataUpdate {
-    topActors: { name: string; count: number; image?: string }[];
-    topDirectors: { name: string; count: number; image?: string }[];
-    topGenres: { name: string; count: number }[];
+    topActors: EnrichedItem[];
+    topDirectors: EnrichedItem[];
+    topGenres: EnrichedItem[];
     processedCount: number;
     totalCount: number;
 }
 
 /**
  * Streams enriched data for all films.
- * Processes in small batches to respect TMDB rate limits (approx 40 req/s max, we stay safer).
- * Invokes onUpdate callback after every batch.
+ * Processes in small batches to respect TMDB rate limits.
  */
 export const streamEnrichedData = async (
-  films: { title: string; year: string }[], 
+  films: SimpleMovie[], 
   onUpdate: (data: EnrichedDataUpdate) => void,
-  shouldStop: () => boolean // Callback to check if we should abort (e.g. unmount)
+  shouldStop: () => boolean 
 ) => {
-  const actorCounts: Record<string, { count: number; image: string | null }> = {};
-  const directorCounts: Record<string, { count: number; image: string | null }> = {};
-  const genreCounts: Record<string, number> = {};
+  const actorCounts: Record<string, { count: number; image: string | null; movies: SimpleMovie[] }> = {};
+  const directorCounts: Record<string, { count: number; image: string | null; movies: SimpleMovie[] }> = {};
+  const genreCounts: Record<string, { count: number; movies: SimpleMovie[] }> = {};
   
-  // Batch Size 5. 
-  // Each film = ~2 calls. 5 films = ~10 calls.
-  // Delay 500ms. = ~20 calls/sec. Safe.
   const BATCH_SIZE = 5;
   const DELAY_MS = 500;
 
@@ -93,31 +90,37 @@ export const streamEnrichedData = async (
     const chunk = films.slice(i, i + BATCH_SIZE);
     
     // Fetch chunk in parallel
-    const promises = chunk.map(film => getMovieDetails(film.title, film.year));
+    const promises = chunk.map(film => getMovieDetails(film.title, film.year).then(res => ({ detail: res, source: film })));
     const results = await Promise.all(promises);
 
-    results.forEach(details => {
-      if (details) {
+    results.forEach(({ detail, source }) => {
+      if (detail) {
         // Aggregate Genres
-        details.genres.forEach(g => {
-          genreCounts[g.name] = (genreCounts[g.name] || 0) + 1;
+        detail.genres.forEach(g => {
+          if (!genreCounts[g.name]) {
+            genreCounts[g.name] = { count: 0, movies: [] };
+          }
+          genreCounts[g.name].count++;
+          genreCounts[g.name].movies.push(source);
         });
 
-        // Aggregate Actors (Limit to top 10 billed to capture ensemble, but avoid extras)
-        details.credits.cast.slice(0, 10).forEach(actor => {
+        // Aggregate Actors (Limit to top 10 billed)
+        detail.credits.cast.slice(0, 10).forEach(actor => {
           if (!actorCounts[actor.name]) {
-            actorCounts[actor.name] = { count: 0, image: actor.profile_path };
+            actorCounts[actor.name] = { count: 0, image: actor.profile_path, movies: [] };
           }
           actorCounts[actor.name].count++;
+          actorCounts[actor.name].movies.push(source);
         });
 
         // Aggregate Directors
-        details.credits.crew.forEach(member => {
+        detail.credits.crew.forEach(member => {
             if (member.job === 'Director') {
                 if (!directorCounts[member.name]) {
-                    directorCounts[member.name] = { count: 0, image: member.profile_path };
+                    directorCounts[member.name] = { count: 0, image: member.profile_path, movies: [] };
                 }
                 directorCounts[member.name].count++;
+                directorCounts[member.name].movies.push(source);
             }
         });
       }
@@ -128,11 +131,12 @@ export const streamEnrichedData = async (
     // Calculate Top X arrays for the update
     const topActors = Object.entries(actorCounts)
         .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 5) // Top 5
+        .slice(0, 5)
         .map(([name, data]) => ({ 
             name, 
             count: data.count, 
-            image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined 
+            image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined,
+            movies: data.movies
         }));
 
     const topDirectors = Object.entries(directorCounts)
@@ -141,13 +145,18 @@ export const streamEnrichedData = async (
         .map(([name, data]) => ({ 
             name, 
             count: data.count, 
-            image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined 
+            image: data.image ? `${IMAGE_BASE_URL}${data.image}` : undefined,
+            movies: data.movies
         }));
 
     const topGenres = Object.entries(genreCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 8) // Top 8
-        .map(([name, count]) => ({ name, count }));
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 8) 
+        .map(([name, data]) => ({ 
+            name, 
+            count: data.count,
+            movies: data.movies
+        }));
 
     onUpdate({
         topActors,

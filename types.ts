@@ -25,6 +25,19 @@ export interface DailyEntryDetail {
     uri: string;
 }
 
+export interface SimpleMovie {
+    title: string;
+    year: string;
+    rating?: string;
+}
+
+export interface EnrichedItem {
+    name: string;
+    count: number;
+    image?: string;
+    movies: SimpleMovie[];
+}
+
 export interface ProcessedStats {
   totalWatched: number;
   totalRuntimeHours: number; // Est
@@ -34,10 +47,11 @@ export interface ProcessedStats {
   ratingDistribution: { rating: string; count: number }[];
   monthlyDistribution: { month: string; count: number }[];
   dailyActivity: { date: string; count: number }[];
-  dailyEntries: Record<string, DailyEntryDetail[]>; // New field for detailed daily data
+  dailyEntries: Record<string, DailyEntryDetail[]>; 
   dayOfWeekDistribution: { day: string; count: number }[];
   decadeDistribution: { decade: string; count: number }[];
   rewatchCount: number;
+  rewatchedFilms: SimpleMovie[]; // Added
   topRatedFilms: RatingEntry[]; // Top 5
   longestStreak: number;
   busiestDay: { date: string; count: number };
@@ -48,12 +62,12 @@ export interface ProcessedStats {
   year: number; // The analysis year
   
   // The full list needed for background enrichment
-  allFilms: { title: string; year: string }[];
+  allFilms: SimpleMovie[];
 
-  // New Enriched Data (Optional, populated progressively)
-  topActors?: { name: string; count: number; image?: string }[];
-  topDirectors?: { name: string; count: number; image?: string }[];
-  topGenres?: { name: string; count: number }[];
+  // New Enriched Data
+  topActors?: EnrichedItem[];
+  topDirectors?: EnrichedItem[];
+  topGenres?: EnrichedItem[];
 }
 
 export interface PersonaResult {
