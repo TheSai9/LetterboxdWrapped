@@ -4,9 +4,10 @@ import { ProcessedStats, PersonaResult, SimpleMovie, EnrichedItem } from '../typ
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell, LabelList } from 'recharts';
 import { generatePersona } from '../services/geminiService';
 import { getMoviePoster, streamEnrichedData, EnrichedDataUpdate } from '../services/tmdbService';
-import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database, ChevronDown, Share2, Download, QrCode, Smartphone, Monitor } from 'lucide-react';
 import CalendarHeatmap from './CalendarHeatmap';
 import MovieListPanel from './MovieListPanel';
+import { toPng } from 'html-to-image';
 
 interface WrappedSlidesProps {
   stats: ProcessedStats;
@@ -350,7 +351,7 @@ const SlideFavorites = React.memo(({ stats }: { stats: ProcessedStats }) => {
                        {/* Card Container */}
                       <div className="relative w-full aspect-[2/3] border-4 border-black shadow-hard-md group-hover:shadow-hard-lg group-hover:-translate-y-1 transition-all bg-gray-100 overflow-hidden">
                           {posters[film.Name] ? (
-                              <img src={posters[film.Name]} alt={film.Name} className="w-full h-full object-cover" />
+                              <img src={posters[film.Name]} crossOrigin="anonymous" alt={film.Name} className="w-full h-full object-cover" />
                           ) : (
                               <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-bauhaus-bg">
                                   <Film size={32} className="mb-2 opacity-20" />
@@ -467,7 +468,7 @@ const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omi
                         >
                             <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 border-2 border-black overflow-hidden bg-gray-200">
                                 {actor.image ? (
-                                    <img src={actor.image} alt={actor.name} className="w-full h-full object-cover" />
+                                    <img src={actor.image} crossOrigin="anonymous" alt={actor.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-bauhaus-red font-black text-2xl">{idx + 1}</div>
                                 )}
@@ -578,56 +579,314 @@ const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omi
   );
 };
 
-const SlideIdentity = React.memo(({ persona, onReset }: { persona: PersonaResult | null, onReset: () => void }) => (
-  <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 md:px-6 bg-bauhaus-yellow text-bauhaus-black relative overflow-hidden">
-      {/* Poster Design Layout */}
-      <div className="max-w-3xl w-full border-4 border-black bg-white p-6 md:p-12 shadow-hard-lg relative z-10">
-          {/* Top Decoration */}
-          <div className="flex justify-between items-start mb-6 md:mb-8 border-b-4 border-black pb-4 md:pb-8">
-              <div className="flex gap-2">
-                  <div className="w-6 h-6 md:w-8 md:h-8 bg-bauhaus-red border-2 border-black rounded-full"></div>
-                  <div className="w-6 h-6 md:w-8 md:h-8 bg-bauhaus-blue border-2 border-black"></div>
-              </div>
-              <div className="text-right">
-                 <div className="font-black uppercase text-lg md:text-xl tracking-tighter">Persona</div>
-                 <div className="text-xs md:text-sm font-bold">Analysis Module</div>
-              </div>
-          </div>
+const SlideIdentity = React.memo(({ persona, onReset }: { persona: PersonaResult | null, onReset: () => void }) => {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 bg-bauhaus-black text-white relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-20" style={{ backgroundImage: 'radial-gradient(#333 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-bauhaus-blue rounded-full blur-[100px] opacity-30"></div>
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-bauhaus-red rounded-full blur-[100px] opacity-30"></div>
 
-          {persona ? (
-              <div className="text-center">
-                  <h2 className="text-4xl md:text-7xl font-black uppercase leading-[0.9] mb-6 md:mb-8 text-bauhaus-black break-words">
-                      {persona.title}
-                  </h2>
-                  <div className="w-16 md:w-24 h-2 bg-bauhaus-black mx-auto mb-6 md:mb-8"></div>
-                  <p className="text-lg md:text-2xl font-bold uppercase leading-relaxed max-w-2xl mx-auto">
-                      "{persona.description}"
-                  </p>
-              </div>
-          ) : (
-               <div className="animate-pulse flex flex-col items-center justify-center py-12">
-                  <div className="w-12 h-12 border-4 border-t-bauhaus-red border-r-bauhaus-blue border-b-bauhaus-yellow border-l-black rounded-full animate-spin mb-4"></div>
-                  <p className="font-bold uppercase">Constructing Persona...</p>
-               </div>
-          )}
-          
-          {/* Bottom Decoration */}
-          <div className="mt-8 md:mt-12 pt-8 border-t-4 border-black flex justify-center">
-              <button 
-                  onClick={onReset}
-                  className="flex items-center gap-3 px-6 md:px-8 py-3 md:py-4 bg-bauhaus-black text-white font-black uppercase tracking-widest hover:bg-bauhaus-red transition-colors border-2 border-transparent hover:border-black shadow-hard-sm hover:shadow-none hover:translate-x-1 hover:translate-y-1 text-sm md:text-base"
-              >
-                  <RotateCcw size={18} />
-                  Reset
-              </button>
-          </div>
-      </div>
+        <div className="z-10 max-w-4xl w-full flex flex-col items-center text-center">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8"
+            >
+                 <h3 className="text-xl md:text-2xl font-bold uppercase tracking-[0.5em] text-bauhaus-yellow mb-2">Your Cinema Persona</h3>
+            </motion.div>
+
+            {persona ? (
+                <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.8, type: "spring" }}
+                    className="mb-12 w-full"
+                >
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-none mb-12 text-transparent bg-clip-text bg-gradient-to-r from-bauhaus-yellow via-white to-bauhaus-blue drop-shadow-[4px_4px_0px_rgba(208,32,32,1)]">
+                        {persona.title}
+                    </h1>
+                    
+                    <div className="relative inline-block">
+                         <div className="absolute -inset-2 bg-bauhaus-blue rotate-2"></div>
+                         <div className="relative bg-white text-black p-6 md:p-10 border-4 border-black shadow-hard-lg max-w-2xl mx-auto -rotate-1">
+                            <p className="text-lg md:text-2xl font-bold italic leading-relaxed font-serif">
+                                "{persona.description}"
+                            </p>
+                            <div className="mt-4 flex justify-center">
+                                <div className="w-12 h-1 bg-bauhaus-red"></div>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            ) : (
+                <div className="mb-12 flex flex-col items-center">
+                    <Loader2 className="w-16 h-16 animate-spin text-bauhaus-yellow mb-6" />
+                    <p className="text-xl font-bold uppercase tracking-widest animate-pulse">Consulting the Archives...</p>
+                </div>
+            )}
+            
+            <motion.button 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                onClick={onReset}
+                className="mt-8 px-8 py-4 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest hover:bg-white hover:text-black hover:scale-105 transition-all flex items-center gap-2 group"
+            >
+                <RotateCcw className="group-hover:-rotate-180 transition-transform duration-500" />
+                Start Over
+            </motion.button>
+        </div>
+    </div>
+  );
+});
+
+const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: ProcessedStats, persona: PersonaResult | null, enrichedData: Omit<EnrichedDataUpdate, 'processedCount' | 'totalCount'> }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [posters, setPosters] = useState<Record<string, string>>({});
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [layout, setLayout] = useState<'mobile' | 'wide'>('mobile');
+
+  useEffect(() => {
+    const fetchTopPosters = async () => {
+      const topFilms = stats.topRatedFilms.slice(0, 5);
+      const newPosters: Record<string, string> = {};
       
-      {/* Background shapes */}
-      <div className="absolute top-10 left-10 w-24 h-24 md:w-32 md:h-32 bg-bauhaus-blue border-4 border-black rounded-full opacity-50 md:opacity-100"></div>
-      <div className="absolute bottom-10 right-10 w-32 h-32 md:w-48 md:h-48 bg-bauhaus-red border-4 border-black rotate-12 opacity-50 md:opacity-100"></div>
-  </div>
-));
+      for (const film of topFilms) {
+         if (!posters[film.Name]) {
+             const url = await getMoviePoster(film.Name, film.Year);
+             if (url) newPosters[film.Name] = url;
+         }
+      }
+      setPosters(prev => ({ ...prev, ...newPosters }));
+    };
+    fetchTopPosters();
+  }, [stats]);
+
+  const handleDownload = async () => {
+    if (!cardRef.current) return;
+    setIsDownloading(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 2 });
+      const link = document.createElement('a');
+      link.download = `cinewrapped-${stats.year}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Failed to export image', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const topActor = enrichedData.topActors[0];
+  const topDirector = enrichedData.topDirectors[0];
+  const topFilms = stats.topRatedFilms.slice(0, 5);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-full py-8 px-4 bg-bauhaus-bg">
+      {/* Layout Controls */}
+      <div className="flex items-center gap-4 mb-6 bg-white p-2 border-2 border-black shadow-hard-sm">
+          <button 
+            onClick={() => setLayout('mobile')}
+            className={`flex items-center gap-2 px-4 py-2 font-bold uppercase text-sm border-2 border-transparent transition-all ${layout === 'mobile' ? 'bg-bauhaus-yellow border-black shadow-sm' : 'hover:bg-gray-100'}`}
+          >
+             <Smartphone size={16} /> Mobile (9:16)
+          </button>
+          <button 
+            onClick={() => setLayout('wide')}
+            className={`flex items-center gap-2 px-4 py-2 font-bold uppercase text-sm border-2 border-transparent transition-all ${layout === 'wide' ? 'bg-bauhaus-blue text-white border-black shadow-sm' : 'hover:bg-gray-100'}`}
+          >
+             <Monitor size={16} /> Wide (4:3)
+          </button>
+      </div>
+
+      {/* Container for the shareable card */}
+      <div className="mb-8 relative group overflow-auto max-w-full flex justify-center">
+        <div 
+          ref={cardRef}
+          className={`bg-white border-[8px] border-bauhaus-black relative flex flex-col p-6 overflow-hidden shadow-hard-lg transition-all duration-300 origin-top`}
+          style={{
+             width: layout === 'mobile' ? '375px' : '800px',
+             height: layout === 'mobile' ? '667px' : '600px',
+          }}
+        >
+          {/* Background Elements */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-bauhaus-yellow border-l-4 border-b-4 border-bauhaus-black rounded-bl-full z-0"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-bauhaus-blue border-t-4 border-r-4 border-bauhaus-black rounded-tr-full z-0"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-5 z-0" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
+
+          {/* === CONTENT === */}
+          {layout === 'mobile' ? (
+             // --- MOBILE LAYOUT ---
+             <div className="relative z-10 flex flex-col h-full">
+                {/* Header */}
+                <div className="mb-4 border-b-4 border-bauhaus-black pb-2 flex justify-between items-end">
+                    <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">CINE<br/>WRAPPED</h1>
+                    <div className="text-4xl font-black text-bauhaus-red">{stats.year}</div>
+                </div>
+
+                {/* Hero: #1 Movie */}
+                <div className="flex-1 flex flex-col items-center justify-start mb-4">
+                     <div className="relative w-32 h-48 border-4 border-bauhaus-black shadow-[4px_4px_0px_rgba(0,0,0,1)] rotate-2 bg-gray-200 mb-2">
+                        {posters[topFilms[0]?.Name] ? (
+                           <img src={`${posters[topFilms[0]?.Name]}?v=1`} crossOrigin="anonymous" alt="Top Film" className="w-full h-full object-cover" />
+                        ) : (
+                           <div className="w-full h-full flex items-center justify-center text-gray-400 font-black text-4xl">?</div>
+                        )}
+                        <div className="absolute -top-3 -right-3 w-8 h-8 bg-bauhaus-red rounded-full border-2 border-bauhaus-black flex items-center justify-center text-white font-black text-sm">#1</div>
+                     </div>
+                     <div className="text-center w-full px-4">
+                         <div className="text-lg font-black uppercase leading-tight truncate">{topFilms[0]?.Name}</div>
+                     </div>
+                </div>
+
+                {/* Top 5 Grid (Movies 2-5) */}
+                <div className="grid grid-cols-4 gap-2 mb-4 px-2">
+                    {topFilms.slice(1).map((film, idx) => (
+                        <div key={idx} className="flex flex-col items-center">
+                            <div className="w-full aspect-[2/3] border-2 border-bauhaus-black bg-gray-200 relative">
+                                {posters[film.Name] && <img src={`${posters[film.Name]}?v=1`} crossOrigin="anonymous" alt={film.Name} className="w-full h-full object-cover" />}
+                                <div className="absolute top-0 left-0 bg-black text-white text-[8px] font-bold px-1">{idx + 2}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Stars Section (Actor/Director) */}
+                <div className="flex justify-between gap-2 mb-4">
+                    {topActor && (
+                        <div className="bg-white border-2 border-black p-2 flex-1 shadow-hard-sm">
+                            <div className="text-[9px] font-bold uppercase text-gray-500">Top Actor</div>
+                            <div className="font-black text-sm uppercase leading-tight truncate">{topActor.name}</div>
+                            <div className="text-[10px] text-bauhaus-blue font-bold">{topActor.count} Films</div>
+                        </div>
+                    )}
+                    {topDirector && (
+                         <div className="bg-white border-2 border-black p-2 flex-1 shadow-hard-sm">
+                            <div className="text-[9px] font-bold uppercase text-gray-500">Top Director</div>
+                            <div className="font-black text-sm uppercase leading-tight truncate">{topDirector.name}</div>
+                            <div className="text-[10px] text-bauhaus-red font-bold">{topDirector.count} Films</div>
+                        </div>
+                    )}
+                </div>
+
+                 {/* Persona */}
+                <div className="bg-bauhaus-yellow border-2 border-bauhaus-black p-3 text-center mb-auto shadow-hard-sm">
+                    <div className="text-[9px] font-bold uppercase tracking-widest mb-1">My Cinema Persona</div>
+                    <div className="text-lg font-black uppercase leading-none">{persona?.title || "The Mystery Viewer"}</div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-bauhaus-black">
+                     <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-bauhaus-red rounded-full border border-black"></div>
+                        <div className="w-2 h-2 bg-bauhaus-blue rounded-full border border-black"></div>
+                        <div className="w-2 h-2 bg-bauhaus-yellow rounded-full border border-black"></div>
+                     </div>
+                     <div className="flex items-center gap-2">
+                         <QrCode size={20} />
+                         <span className="font-bold text-[10px] uppercase">cinewrapped.app</span>
+                     </div>
+                </div>
+             </div>
+          ) : (
+             // --- WIDE LAYOUT (4:3) ---
+             <div className="relative z-10 grid grid-cols-12 gap-6 h-full">
+                 {/* Left Col: #1 Movie */}
+                 <div className="col-span-5 flex flex-col justify-center h-full relative">
+                      <div className="w-full aspect-[2/3] border-[6px] border-bauhaus-black shadow-[8px_8px_0px_rgba(0,0,0,1)] bg-gray-200 relative">
+                         {posters[topFilms[0]?.Name] ? (
+                             <img src={`${posters[topFilms[0]?.Name]}?v=1`} crossOrigin="anonymous" alt="Top Film" className="w-full h-full object-cover" />
+                          ) : (
+                             <div className="w-full h-full flex items-center justify-center text-gray-400 font-black text-6xl">?</div>
+                          )}
+                          <div className="absolute -top-6 -left-6 w-20 h-20 bg-bauhaus-yellow border-[6px] border-bauhaus-black flex items-center justify-center text-bauhaus-black font-black text-3xl shadow-md">#1</div>
+                      </div>
+                      <h2 className="text-3xl font-black uppercase mt-6 leading-tight border-l-8 border-bauhaus-red pl-4">{topFilms[0]?.Name}</h2>
+                      <div className="flex items-center gap-2 mt-2 pl-6">
+                           <Star fill="black" size={20} />
+                           <span className="font-bold text-xl">{topFilms[0]?.Rating}</span>
+                      </div>
+                 </div>
+
+                 {/* Right Col: Stats Grid */}
+                 <div className="col-span-7 flex flex-col h-full">
+                      {/* Header */}
+                      <div className="flex justify-between items-start border-b-8 border-bauhaus-black pb-4 mb-6">
+                           <div>
+                              <h1 className="text-5xl font-black uppercase tracking-tighter leading-[0.85]">CINE<br/>WRAPPED</h1>
+                           </div>
+                           <div className="text-6xl font-black text-bauhaus-blue stroke-black text-stroke-2">{stats.year}</div>
+                      </div>
+
+                      {/* Top 2-5 Row */}
+                      <div className="grid grid-cols-4 gap-4 mb-6">
+                           {topFilms.slice(1).map((film, idx) => (
+                               <div key={idx} className="flex flex-col">
+                                   <div className="w-full aspect-[2/3] border-4 border-bauhaus-black bg-gray-200 shadow-hard-sm relative">
+                                        {posters[film.Name] && <img src={`${posters[film.Name]}?v=1`} crossOrigin="anonymous" alt={film.Name} className="w-full h-full object-cover" />}
+                                        <div className="absolute bottom-0 right-0 bg-bauhaus-red text-white text-xs font-bold px-1 border-t-2 border-l-2 border-black">#{idx + 2}</div>
+                                   </div>
+                               </div>
+                           ))}
+                      </div>
+
+                      {/* Talent Stats */}
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                          {topActor && (
+                              <div className="bg-white border-4 border-black p-3 shadow-hard-md relative">
+                                  <div className="absolute -top-3 left-4 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Actor</div>
+                                  <div className="text-2xl font-black uppercase leading-none mt-2 truncate">{topActor.name}</div>
+                                  <div className="text-sm font-bold text-gray-500">{topActor.count} Films</div>
+                              </div>
+                          )}
+                          {topDirector && (
+                              <div className="bg-white border-4 border-black p-3 shadow-hard-md relative">
+                                  <div className="absolute -top-3 left-4 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Director</div>
+                                  <div className="text-2xl font-black uppercase leading-none mt-2 truncate">{topDirector.name}</div>
+                                  <div className="text-sm font-bold text-gray-500">{topDirector.count} Films</div>
+                              </div>
+                          )}
+                      </div>
+
+                      {/* Persona & Footer */}
+                      <div className="mt-auto">
+                           <div className="bg-bauhaus-yellow border-4 border-bauhaus-black p-4 mb-4 shadow-hard-md flex justify-between items-center">
+                                <div>
+                                    <div className="text-xs font-bold uppercase tracking-widest">My Cinema Persona</div>
+                                    <div className="text-2xl font-black uppercase leading-none">{persona?.title || "The Mystery Viewer"}</div>
+                                </div>
+                                <div className="text-4xl font-black opacity-20 rotate-12">XP</div>
+                           </div>
+
+                           <div className="flex justify-between items-end border-t-4 border-bauhaus-black pt-2">
+                               <div className="text-sm font-bold uppercase">Generated by CineWrapped</div>
+                               <div className="flex items-center gap-2">
+                                  <QrCode size={32} />
+                                  <span className="font-black text-lg uppercase tracking-wider">cinewrapped.app</span>
+                               </div>
+                           </div>
+                      </div>
+                 </div>
+             </div>
+          )}
+
+        </div>
+      </div>
+
+      <button 
+        onClick={handleDownload}
+        disabled={isDownloading}
+        className="flex items-center gap-2 bg-bauhaus-black text-white px-8 py-4 font-black uppercase tracking-widest hover:bg-bauhaus-red transition-all shadow-hard-md hover:-translate-y-1 active:translate-y-0 active:shadow-none"
+      >
+         {isDownloading ? <Loader2 className="animate-spin" /> : <Download size={20} />}
+         Download Card
+      </button>
+    </div>
+  );
+});
 
 // --- MAIN WRAPPEDSLIDES COMPONENT ---
 
@@ -644,7 +903,7 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
   });
   const [enrichmentProgress, setEnrichmentProgress] = useState({ processed: 0, total: 0 });
   
-  const totalSlides = 7;
+  const totalSlides = 8; // Increased for Share Slide
 
   useEffect(() => {
     // Generate AI Persona
@@ -723,6 +982,7 @@ const WrappedSlides: React.FC<WrappedSlidesProps> = ({ stats, onReset }) => {
                 {currentSlide === 4 && <SlideFavorites stats={stats} />}
                 {currentSlide === 5 && <SlideCastCrew enrichedData={enrichedData} enrichmentProgress={enrichmentProgress} />}
                 {currentSlide === 6 && <SlideIdentity persona={persona} onReset={onReset} />}
+                {currentSlide === 7 && <SlideShare stats={stats} persona={persona} enrichedData={enrichedData} />}
             </motion.div>
         </AnimatePresence>
       </div>
