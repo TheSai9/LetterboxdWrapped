@@ -733,40 +733,45 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
              // --- MOBILE LAYOUT ---
              <div className="relative z-10 flex flex-col h-full">
                 {/* Header */}
-                <div className="mb-2 border-b-4 border-bauhaus-black pb-2 flex justify-between items-end">
+                <div className="mb-2 border-b-4 border-bauhaus-black pb-2 flex justify-between items-end shrink-0">
                     <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">CINE<br/>WRAPPED</h1>
                     <div className="text-right">
                          <div className="text-4xl font-black text-bauhaus-red leading-none">{stats.year}</div>
                     </div>
                 </div>
 
-                {/* Key Stats Row */}
-                <div className="flex justify-between gap-2 mb-4">
-                    <div className="bg-bauhaus-black text-white px-2 py-1 text-xs font-bold uppercase flex-1 text-center">
-                        <span className="text-bauhaus-yellow">{stats.totalWatched}</span> Films
+                {/* Hero + Stats Row */}
+                <div className="flex gap-4 mb-4 items-stretch shrink-0 h-48">
+                    {/* Left: #1 Movie */}
+                    <div className="flex-[2] flex flex-col justify-between">
+                         <div className="relative w-full h-36 border-4 border-bauhaus-black shadow-[4px_4px_0px_rgba(0,0,0,1)] rotate-[-2deg] bg-gray-200">
+                            {posters[topFilms[0]?.Name] ? (
+                               <img src={`${posters[topFilms[0]?.Name]}?v=1`} crossOrigin="anonymous" alt="Top Film" className="w-full h-full object-cover" />
+                            ) : (
+                               <div className="w-full h-full flex items-center justify-center text-gray-400 font-black text-4xl">?</div>
+                            )}
+                            <div className="absolute -top-3 -right-3 w-8 h-8 bg-bauhaus-red rounded-full border-2 border-bauhaus-black flex items-center justify-center text-white font-black text-sm">#1</div>
+                         </div>
+                         <div className="text-center w-full px-1 mt-1">
+                             <div className="text-lg font-black uppercase leading-tight truncate">{topFilms[0]?.Name}</div>
+                         </div>
                     </div>
-                    <div className="bg-bauhaus-black text-white px-2 py-1 text-xs font-bold uppercase flex-1 text-center">
-                        <span className="text-bauhaus-blue">{Math.round(stats.totalRuntimeHours)}</span> Hours
-                    </div>
-                </div>
 
-                {/* Hero: #1 Movie */}
-                <div className="flex-1 flex flex-col items-center justify-start mb-4">
-                     <div className="relative w-32 h-48 border-4 border-bauhaus-black shadow-[4px_4px_0px_rgba(0,0,0,1)] rotate-2 bg-gray-200 mb-2">
-                        {posters[topFilms[0]?.Name] ? (
-                           <img src={`${posters[topFilms[0]?.Name]}?v=1`} crossOrigin="anonymous" alt="Top Film" className="w-full h-full object-cover" />
-                        ) : (
-                           <div className="w-full h-full flex items-center justify-center text-gray-400 font-black text-4xl">?</div>
-                        )}
-                        <div className="absolute -top-3 -right-3 w-8 h-8 bg-bauhaus-red rounded-full border-2 border-bauhaus-black flex items-center justify-center text-white font-black text-sm">#1</div>
-                     </div>
-                     <div className="text-center w-full px-4">
-                         <div className="text-lg font-black uppercase leading-tight truncate">{topFilms[0]?.Name}</div>
-                     </div>
+                    {/* Right: Stats Stack */}
+                    <div className="flex-1 flex flex-col gap-2 h-full">
+                        <div className="flex-1 bg-bauhaus-black text-white p-2 flex flex-col items-center justify-center shadow-hard-sm border-2 border-transparent">
+                             <span className="text-bauhaus-yellow font-black text-3xl leading-none">{stats.totalWatched}</span>
+                             <span className="text-[10px] font-bold uppercase leading-tight text-center mt-1">Films</span>
+                        </div>
+                        <div className="flex-1 bg-bauhaus-black text-white p-2 flex flex-col items-center justify-center shadow-hard-sm border-2 border-transparent">
+                             <span className="text-bauhaus-blue font-black text-3xl leading-none">{Math.round(stats.totalRuntimeHours)}</span>
+                             <span className="text-[10px] font-bold uppercase leading-tight text-center mt-1">Hours</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Top 5 Grid (Movies 2-5) */}
-                <div className="grid grid-cols-4 gap-2 mb-4 px-2">
+                <div className="grid grid-cols-4 gap-2 mb-4 px-2 shrink-0">
                     {topFilms.slice(1).map((film, idx) => (
                         <div key={idx} className="flex flex-col items-center">
                             <div className="w-full aspect-[2/3] border-2 border-bauhaus-black bg-gray-200 relative">
@@ -778,7 +783,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                 </div>
 
                 {/* Stars Section (Actor/Director) */}
-                <div className="flex justify-between gap-2 mb-4">
+                <div className="flex justify-between gap-2 mb-4 shrink-0">
                     {topActor && (
                         <div className="bg-white border-2 border-black p-2 flex-1 shadow-hard-sm">
                             <div className="text-[9px] font-bold uppercase text-gray-500">Top Actor</div>
@@ -796,13 +801,13 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                 </div>
 
                  {/* Persona */}
-                <div className="bg-bauhaus-yellow border-2 border-bauhaus-black p-3 text-center mb-auto shadow-hard-sm">
+                <div className="bg-bauhaus-yellow border-2 border-bauhaus-black p-3 text-center shadow-hard-sm mt-auto">
                     <div className="text-[9px] font-bold uppercase tracking-widest mb-1">My Cinema Persona</div>
                     <div className="text-lg font-black uppercase leading-none">{persona?.title || "The Mystery Viewer"}</div>
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-bauhaus-black">
+                <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-bauhaus-black shrink-0">
                      <div className="flex items-center gap-1">
                         <div className="w-2 h-2 bg-bauhaus-red rounded-full border border-black"></div>
                         <div className="w-2 h-2 bg-bauhaus-blue rounded-full border border-black"></div>
@@ -816,7 +821,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
              </div>
           ) : (
              // --- WIDE LAYOUT (4:3) ---
-             <div className="relative z-10 grid grid-cols-12 gap-4 h-full">
+             <div className="relative z-10 grid grid-cols-12 gap-6 h-full">
                  {/* Left Col: #1 Movie */}
                  <div className="col-span-5 flex flex-col justify-center h-full relative">
                       <div className="w-full aspect-[2/3] border-[6px] border-bauhaus-black shadow-[8px_8px_0px_rgba(0,0,0,1)] bg-gray-200 relative">
@@ -839,10 +844,10 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       </div>
                  </div>
 
-                 {/* Right Col: Stats Grid */}
-                 <div className="col-span-7 flex flex-col h-full">
+                 {/* Right Col: Stats Grid - Evenly Spaced */}
+                 <div className="col-span-7 flex flex-col h-full justify-between py-1">
                       {/* Header */}
-                      <div className="flex justify-between items-end border-b-8 border-bauhaus-black pb-2 mb-3">
+                      <div className="flex justify-between items-end border-b-8 border-bauhaus-black pb-2">
                            <div>
                               <h1 className="text-5xl font-black uppercase tracking-tighter leading-[0.85]">CINE<br/>WRAPPED</h1>
                            </div>
@@ -851,8 +856,8 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                            </div>
                       </div>
 
-                      {/* Stats Row (Added for Wide Layout) */}
-                      <div className="flex gap-4 mb-3">
+                      {/* Stats Row */}
+                      <div className="flex gap-4">
                         <div className="bg-bauhaus-black text-white p-2 flex-1 text-center shadow-hard-sm">
                             <span className="text-bauhaus-yellow font-black text-xl">{stats.totalWatched}</span>
                             <span className="text-xs font-bold uppercase ml-2">Films Watched</span>
@@ -864,7 +869,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       </div>
 
                       {/* Top 2-5 Row */}
-                      <div className="grid grid-cols-4 gap-3 mb-3">
+                      <div className="grid grid-cols-4 gap-3">
                            {topFilms.slice(1).map((film, idx) => (
                                <div key={idx} className="flex flex-col">
                                    <div className="w-full aspect-[2/3] border-4 border-bauhaus-black bg-gray-200 shadow-hard-sm relative">
@@ -876,7 +881,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       </div>
 
                       {/* Talent Stats */}
-                      <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div className="grid grid-cols-2 gap-4">
                           {topActor && (
                               <div className="bg-white border-4 border-black p-2 px-3 shadow-hard-md relative">
                                   <div className="absolute -top-3 left-3 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Actor</div>
@@ -895,7 +900,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
 
                       {/* Top Genre Panel */}
                       {topGenre && (
-                        <div className="bg-white border-4 border-black p-2 px-3 shadow-hard-md mb-3 relative">
+                        <div className="bg-white border-4 border-black p-2 px-3 shadow-hard-md relative">
                             <div className="absolute -top-3 left-3 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Genre</div>
                             <div className="flex justify-between items-end mt-1">
                                 <div className="text-xl font-black uppercase leading-none truncate">{topGenre.name}</div>
@@ -905,7 +910,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       )}
 
                       {/* Persona & Footer */}
-                      <div className="mt-auto">
+                      <div>
                            <div className="bg-bauhaus-yellow border-4 border-bauhaus-black p-3 mb-2 shadow-hard-md flex justify-between items-center">
                                 <div>
                                     <div className="text-xs font-bold uppercase tracking-widest">My Cinema Persona</div>
