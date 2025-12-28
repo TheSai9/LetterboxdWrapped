@@ -682,7 +682,18 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
 
   const topActor = enrichedData.topActors[0];
   const topDirector = enrichedData.topDirectors[0];
+  const topGenre = enrichedData.topGenres[0];
   const topFilms = stats.topRatedFilms.slice(0, 5);
+  
+  // Helper for dynamic font sizing
+  const getTitleStyle = (title: string) => {
+    const len = title?.length || 0;
+    // Tighter thresholds to ensure it fits one row
+    if (len < 10) return "text-4xl"; 
+    if (len < 18) return "text-3xl"; 
+    if (len < 28) return "text-2xl"; 
+    return "text-xl truncate";
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full py-8 px-4 bg-bauhaus-bg">
@@ -722,9 +733,21 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
              // --- MOBILE LAYOUT ---
              <div className="relative z-10 flex flex-col h-full">
                 {/* Header */}
-                <div className="mb-4 border-b-4 border-bauhaus-black pb-2 flex justify-between items-end">
+                <div className="mb-2 border-b-4 border-bauhaus-black pb-2 flex justify-between items-end">
                     <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">CINE<br/>WRAPPED</h1>
-                    <div className="text-4xl font-black text-bauhaus-red">{stats.year}</div>
+                    <div className="text-right">
+                         <div className="text-4xl font-black text-bauhaus-red leading-none">{stats.year}</div>
+                    </div>
+                </div>
+
+                {/* Key Stats Row */}
+                <div className="flex justify-between gap-2 mb-4">
+                    <div className="bg-bauhaus-black text-white px-2 py-1 text-xs font-bold uppercase flex-1 text-center">
+                        <span className="text-bauhaus-yellow">{stats.totalWatched}</span> Films
+                    </div>
+                    <div className="bg-bauhaus-black text-white px-2 py-1 text-xs font-bold uppercase flex-1 text-center">
+                        <span className="text-bauhaus-blue">{Math.round(stats.totalRuntimeHours)}</span> Hours
+                    </div>
                 </div>
 
                 {/* Hero: #1 Movie */}
@@ -793,7 +816,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
              </div>
           ) : (
              // --- WIDE LAYOUT (4:3) ---
-             <div className="relative z-10 grid grid-cols-12 gap-6 h-full">
+             <div className="relative z-10 grid grid-cols-12 gap-4 h-full">
                  {/* Left Col: #1 Movie */}
                  <div className="col-span-5 flex flex-col justify-center h-full relative">
                       <div className="w-full aspect-[2/3] border-[6px] border-bauhaus-black shadow-[8px_8px_0px_rgba(0,0,0,1)] bg-gray-200 relative">
@@ -805,11 +828,11 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                           <div className="absolute -top-6 -left-6 w-20 h-20 bg-bauhaus-yellow border-[6px] border-bauhaus-black flex items-center justify-center text-bauhaus-black font-black text-3xl shadow-md">#1</div>
                       </div>
                       
-                      {/* Boxed Title for #1 Movie */}
-                      <div className="mt-6 bg-white border-4 border-bauhaus-black p-4 shadow-hard-md relative">
-                           <div className="absolute -top-3 left-4 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Film</div>
-                           <div className="text-3xl font-black uppercase leading-tight truncate">{topFilms[0]?.Name}</div>
-                           <div className="flex items-center gap-2 mt-2 text-bauhaus-blue">
+                      {/* Boxed Title for #1 Movie - Tighter Box */}
+                      <div className="mt-3 mx-1 bg-white border-4 border-bauhaus-black p-3 shadow-hard-md relative">
+                           <div className="absolute -top-3 left-3 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Film</div>
+                           <div className={`${getTitleStyle(topFilms[0]?.Name)} font-black uppercase leading-tight whitespace-nowrap overflow-hidden text-ellipsis`}>{topFilms[0]?.Name}</div>
+                           <div className="flex items-center gap-2 mt-1 text-bauhaus-blue">
                                <Star fill="currentColor" size={20} />
                                <span className="font-bold text-xl text-black">{topFilms[0]?.Rating}</span>
                            </div>
@@ -819,15 +842,29 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                  {/* Right Col: Stats Grid */}
                  <div className="col-span-7 flex flex-col h-full">
                       {/* Header */}
-                      <div className="flex justify-between items-start border-b-8 border-bauhaus-black pb-4 mb-4">
+                      <div className="flex justify-between items-end border-b-8 border-bauhaus-black pb-2 mb-3">
                            <div>
                               <h1 className="text-5xl font-black uppercase tracking-tighter leading-[0.85]">CINE<br/>WRAPPED</h1>
                            </div>
-                           <div className="text-6xl font-black text-bauhaus-blue stroke-black text-stroke-2">{stats.year}</div>
+                           <div className="flex flex-col items-end">
+                                <div className="text-6xl font-black text-bauhaus-blue stroke-black text-stroke-2 leading-none">{stats.year}</div>
+                           </div>
+                      </div>
+
+                      {/* Stats Row (Added for Wide Layout) */}
+                      <div className="flex gap-4 mb-3">
+                        <div className="bg-bauhaus-black text-white p-2 flex-1 text-center shadow-hard-sm">
+                            <span className="text-bauhaus-yellow font-black text-xl">{stats.totalWatched}</span>
+                            <span className="text-xs font-bold uppercase ml-2">Films Watched</span>
+                        </div>
+                        <div className="bg-bauhaus-black text-white p-2 flex-1 text-center shadow-hard-sm">
+                             <span className="text-bauhaus-blue font-black text-xl">{Math.round(stats.totalRuntimeHours)}</span>
+                             <span className="text-xs font-bold uppercase ml-2">Hours Spent</span>
+                        </div>
                       </div>
 
                       {/* Top 2-5 Row */}
-                      <div className="grid grid-cols-4 gap-4 mb-4">
+                      <div className="grid grid-cols-4 gap-3 mb-3">
                            {topFilms.slice(1).map((film, idx) => (
                                <div key={idx} className="flex flex-col">
                                    <div className="w-full aspect-[2/3] border-4 border-bauhaus-black bg-gray-200 shadow-hard-sm relative">
@@ -839,39 +876,50 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       </div>
 
                       {/* Talent Stats */}
-                      <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="grid grid-cols-2 gap-4 mb-3">
                           {topActor && (
-                              <div className="bg-white border-4 border-black p-3 shadow-hard-md relative">
-                                  <div className="absolute -top-3 left-4 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Actor</div>
-                                  <div className="text-2xl font-black uppercase leading-none mt-2 truncate">{topActor.name}</div>
+                              <div className="bg-white border-4 border-black p-2 px-3 shadow-hard-md relative">
+                                  <div className="absolute -top-3 left-3 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Actor</div>
+                                  <div className="text-xl font-black uppercase leading-none mt-1 truncate">{topActor.name}</div>
                                   <div className="text-sm font-bold text-gray-500">{topActor.count} Films</div>
                               </div>
                           )}
                           {topDirector && (
-                              <div className="bg-white border-4 border-black p-3 shadow-hard-md relative">
-                                  <div className="absolute -top-3 left-4 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Director</div>
-                                  <div className="text-2xl font-black uppercase leading-none mt-2 truncate">{topDirector.name}</div>
+                              <div className="bg-white border-4 border-black p-2 px-3 shadow-hard-md relative">
+                                  <div className="absolute -top-3 left-3 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Director</div>
+                                  <div className="text-xl font-black uppercase leading-none mt-1 truncate">{topDirector.name}</div>
                                   <div className="text-sm font-bold text-gray-500">{topDirector.count} Films</div>
                               </div>
                           )}
                       </div>
 
+                      {/* Top Genre Panel */}
+                      {topGenre && (
+                        <div className="bg-white border-4 border-black p-2 px-3 shadow-hard-md mb-3 relative">
+                            <div className="absolute -top-3 left-3 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Genre</div>
+                            <div className="flex justify-between items-end mt-1">
+                                <div className="text-xl font-black uppercase leading-none truncate">{topGenre.name}</div>
+                                <div className="text-sm font-bold text-gray-500 whitespace-nowrap">{topGenre.count} Films</div>
+                            </div>
+                        </div>
+                      )}
+
                       {/* Persona & Footer */}
-                      <div className="mt-2">
-                           <div className="bg-bauhaus-yellow border-4 border-bauhaus-black p-4 mb-4 shadow-hard-md flex justify-between items-center">
+                      <div className="mt-auto">
+                           <div className="bg-bauhaus-yellow border-4 border-bauhaus-black p-3 mb-2 shadow-hard-md flex justify-between items-center">
                                 <div>
                                     <div className="text-xs font-bold uppercase tracking-widest">My Cinema Persona</div>
-                                    <div className="text-2xl font-black uppercase leading-none">{persona?.title || "The Mystery Viewer"}</div>
+                                    <div className="text-xl font-black uppercase leading-none">{persona?.title || "The Mystery Viewer"}</div>
                                 </div>
-                                <div className="text-4xl font-black opacity-20 rotate-12">XP</div>
+                                <div className="text-3xl font-black opacity-20 rotate-12">XP</div>
                            </div>
 
-                           <div className="flex justify-between items-end border-t-4 border-bauhaus-black pt-2">
-                               <div className="text-sm font-bold uppercase">Generated by CineWrapped</div>
+                           <div className="flex justify-between items-end border-t-4 border-bauhaus-black pt-1">
+                               <div className="text-xs font-bold uppercase">Generated by CineWrapped</div>
                                <div className="flex items-center gap-2">
-                                  <QrCode size={32} />
-                                  <span className="font-black text-lg uppercase tracking-wider">cinewrapped.app</span>
-                               </div>
+                                  <QrCode size={24} />
+                                  <span className="font-black text-sm uppercase tracking-wider">cinewrapped.app</span>
+                                </div>
                            </div>
                       </div>
                  </div>
