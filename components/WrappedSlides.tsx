@@ -351,7 +351,7 @@ const SlideFavorites = React.memo(({ stats }: { stats: ProcessedStats }) => {
                        {/* Card Container */}
                       <div className="relative w-full aspect-[2/3] border-4 border-black shadow-hard-md group-hover:shadow-hard-lg group-hover:-translate-y-1 transition-all bg-gray-100 overflow-hidden">
                           {posters[film.Name] ? (
-                              <img src={posters[film.Name]} crossOrigin="anonymous" alt={film.Name} className="w-full h-full object-cover" />
+                              <img src={posters[film.Name]} alt={film.Name} className="w-full h-full object-cover" />
                           ) : (
                               <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-bauhaus-bg">
                                   <Film size={32} className="mb-2 opacity-20" />
@@ -468,7 +468,7 @@ const SlideCastCrew = ({ enrichedData, enrichmentProgress }: { enrichedData: Omi
                         >
                             <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 border-2 border-black overflow-hidden bg-gray-200">
                                 {actor.image ? (
-                                    <img src={actor.image} crossOrigin="anonymous" alt={actor.name} className="w-full h-full object-cover" />
+                                    <img src={actor.image} alt={actor.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-bauhaus-red font-black text-2xl">{idx + 1}</div>
                                 )}
@@ -804,17 +804,22 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                           )}
                           <div className="absolute -top-6 -left-6 w-20 h-20 bg-bauhaus-yellow border-[6px] border-bauhaus-black flex items-center justify-center text-bauhaus-black font-black text-3xl shadow-md">#1</div>
                       </div>
-                      <h2 className="text-3xl font-black uppercase mt-6 leading-tight border-l-8 border-bauhaus-red pl-4">{topFilms[0]?.Name}</h2>
-                      <div className="flex items-center gap-2 mt-2 pl-6">
-                           <Star fill="black" size={20} />
-                           <span className="font-bold text-xl">{topFilms[0]?.Rating}</span>
+                      
+                      {/* Boxed Title for #1 Movie */}
+                      <div className="mt-6 bg-white border-4 border-bauhaus-black p-4 shadow-hard-md relative">
+                           <div className="absolute -top-3 left-4 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Film</div>
+                           <div className="text-3xl font-black uppercase leading-tight truncate">{topFilms[0]?.Name}</div>
+                           <div className="flex items-center gap-2 mt-2 text-bauhaus-blue">
+                               <Star fill="currentColor" size={20} />
+                               <span className="font-bold text-xl text-black">{topFilms[0]?.Rating}</span>
+                           </div>
                       </div>
                  </div>
 
                  {/* Right Col: Stats Grid */}
                  <div className="col-span-7 flex flex-col h-full">
                       {/* Header */}
-                      <div className="flex justify-between items-start border-b-8 border-bauhaus-black pb-4 mb-6">
+                      <div className="flex justify-between items-start border-b-8 border-bauhaus-black pb-4 mb-4">
                            <div>
                               <h1 className="text-5xl font-black uppercase tracking-tighter leading-[0.85]">CINE<br/>WRAPPED</h1>
                            </div>
@@ -822,7 +827,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       </div>
 
                       {/* Top 2-5 Row */}
-                      <div className="grid grid-cols-4 gap-4 mb-6">
+                      <div className="grid grid-cols-4 gap-4 mb-4">
                            {topFilms.slice(1).map((film, idx) => (
                                <div key={idx} className="flex flex-col">
                                    <div className="w-full aspect-[2/3] border-4 border-bauhaus-black bg-gray-200 shadow-hard-sm relative">
@@ -834,7 +839,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       </div>
 
                       {/* Talent Stats */}
-                      <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
                           {topActor && (
                               <div className="bg-white border-4 border-black p-3 shadow-hard-md relative">
                                   <div className="absolute -top-3 left-4 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Actor</div>
@@ -852,7 +857,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       </div>
 
                       {/* Persona & Footer */}
-                      <div className="mt-auto">
+                      <div className="mt-2">
                            <div className="bg-bauhaus-yellow border-4 border-bauhaus-black p-4 mb-4 shadow-hard-md flex justify-between items-center">
                                 <div>
                                     <div className="text-xs font-bold uppercase tracking-widest">My Cinema Persona</div>
