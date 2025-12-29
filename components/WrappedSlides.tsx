@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ProcessedStats, PersonaResult, SimpleMovie, EnrichedItem } from '../types';
+import { ProcessedStats, PersonaResult, SimpleMovie, EnrichedItem, RatingEntry } from '../types';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell, LabelList } from 'recharts';
 import { generatePersona } from '../services/geminiService';
 import { getMoviePoster, streamEnrichedData, EnrichedDataUpdate } from '../services/tmdbService';
-import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database, ChevronDown, Share2, Download, QrCode, Smartphone, Monitor } from 'lucide-react';
+import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database, ChevronDown, Share2, Download, QrCode, Smartphone, Monitor, ListOrdered, ChevronUp } from 'lucide-react';
 import CalendarHeatmap from './CalendarHeatmap';
 import MovieListPanel from './MovieListPanel';
 import { toPng } from 'html-to-image';
@@ -647,13 +647,22 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
   const [posters, setPosters] = useState<Record<string, string>>({});
   const [isDownloading, setIsDownloading] = useState(false);
   const [layout, setLayout] = useState<'mobile' | 'wide'>('mobile');
+  
+  // Reordering Logic
+  const [orderedFilms, setOrderedFilms] = useState<RatingEntry[]>(() => stats.topRatedFilms);
+  const [isReordering, setIsReordering] = useState(false);
+
+  useEffect(() => {
+      setOrderedFilms(stats.topRatedFilms);
+  }, [stats]);
+
+  const displayedFilms = orderedFilms.slice(0, 5);
 
   useEffect(() => {
     const fetchTopPosters = async () => {
-      const topFilms = stats.topRatedFilms.slice(0, 5);
       const newPosters: Record<string, string> = {};
       
-      for (const film of topFilms) {
+      for (const film of displayedFilms) {
          if (!posters[film.Name]) {
              const url = await getMoviePoster(film.Name, film.Year);
              if (url) newPosters[film.Name] = url;
@@ -662,7 +671,17 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
       setPosters(prev => ({ ...prev, ...newPosters }));
     };
     fetchTopPosters();
-  }, [stats]);
+  }, [displayedFilms]);
+
+  const moveFilm = (index: number, direction: 'up' | 'down') => {
+      const newFilms = [...orderedFilms];
+      if (direction === 'up' && index > 0) {
+          [newFilms[index], newFilms[index - 1]] = [newFilms[index - 1], newFilms[index]];
+      } else if (direction === 'down' && index < newFilms.length - 1) {
+          [newFilms[index], newFilms[index + 1]] = [newFilms[index + 1], newFilms[index]];
+      }
+      setOrderedFilms(newFilms);
+  };
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -683,7 +702,8 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
   const topActor = enrichedData.topActors[0];
   const topDirector = enrichedData.topDirectors[0];
   const topGenre = enrichedData.topGenres[0];
-  const topFilms = stats.topRatedFilms.slice(0, 5);
+  // Using reordered list for display
+  const topFilms = displayedFilms;
   
   // Helper for dynamic font sizing
   const getTitleStyle = (title: string) => {
@@ -698,7 +718,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
   return (
     <div className="flex flex-col items-center justify-center min-h-full py-8 px-4 bg-bauhaus-bg">
       {/* Layout Controls */}
-      <div className="flex items-center gap-4 mb-6 bg-white p-2 border-2 border-black shadow-hard-sm">
+      <div className="flex items-center gap-4 mb-6 bg-white p-2 border-2 border-black shadow-hard-sm flex-wrap justify-center">
           <button 
             onClick={() => setLayout('mobile')}
             className={`flex items-center gap-2 px-4 py-2 font-bold uppercase text-sm border-2 border-transparent transition-all ${layout === 'mobile' ? 'bg-bauhaus-yellow border-black shadow-sm' : 'hover:bg-gray-100'}`}
@@ -710,6 +730,13 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
             className={`flex items-center gap-2 px-4 py-2 font-bold uppercase text-sm border-2 border-transparent transition-all ${layout === 'wide' ? 'bg-bauhaus-blue text-white border-black shadow-sm' : 'hover:bg-gray-100'}`}
           >
              <Monitor size={16} /> Wide (4:3)
+          </button>
+          <div className="w-[1px] h-6 bg-gray-300 mx-2"></div>
+          <button
+            onClick={() => setIsReordering(true)}
+            className="flex items-center gap-2 px-4 py-2 font-bold uppercase text-sm border-2 border-transparent hover:bg-gray-100 bg-white"
+          >
+            <ListOrdered size={16} /> Adjust Order
           </button>
       </div>
 
@@ -840,6 +867,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                       
                       {/* Boxed Title for #1 Movie - Tighter Box */}
                       <div className="mt-3 mx-1 bg-white border-4 border-bauhaus-black p-3 shadow-hard-md relative">
+                           <div className="absolute -top-3 left-3 bg-bauhaus-black text-white px-2 text-xs font-bold uppercase">Top Film</div>
                            <div className={`${getTitleStyle(topFilms[0]?.Name)} font-black uppercase leading-tight whitespace-nowrap overflow-hidden text-ellipsis`}>{topFilms[0]?.Name}</div>
                            <div className="flex items-center gap-2 mt-1 text-bauhaus-blue">
                                <Star fill="currentColor" size={20} />
@@ -925,7 +953,7 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
 
                            <div className="flex justify-between items-end border-t-4 border-bauhaus-black pt-1">
                                <div className="text-xs font-bold uppercase">Generated by CineWrapped</div>
-                               <div className="flex items-center gap-5">
+                               <div className="flex items-center gap-2">
                                   <QrCode size={24} />
                                   <span className="font-black text-sm uppercase tracking-wider">cinewrapped.app</span>
                                 </div>
@@ -946,6 +974,60 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
          {isDownloading ? <Loader2 className="animate-spin" /> : <Download size={20} />}
          Download Card
       </button>
+
+      {/* Reorder Modal */}
+      <AnimatePresence>
+        {isReordering && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="bg-white border-4 border-bauhaus-black p-6 w-full max-w-md shadow-hard-lg max-h-[80vh] flex flex-col"
+                >
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-2xl font-black uppercase">Reorder Top Films</h3>
+                        <div className="text-xs font-bold text-gray-500 uppercase">Top 5 will be displayed</div>
+                    </div>
+                    
+                    <div className="space-y-2 overflow-y-auto custom-scrollbar flex-1 pr-2">
+                        {orderedFilms.map((film, idx) => (
+                            <div key={`${film.Name}-${idx}`} className={`flex items-center justify-between border-2 p-2 ${idx < 5 ? 'border-bauhaus-black bg-white' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className={`font-black text-sm w-6 h-6 flex items-center justify-center shrink-0 ${idx < 5 ? 'bg-bauhaus-yellow border border-black' : 'bg-gray-200'}`}>
+                                        {idx + 1}
+                                    </div>
+                                    <span className="font-bold truncate text-sm">{film.Name}</span>
+                                </div>
+                                <div className="flex gap-1 shrink-0">
+                                    <button 
+                                        onClick={() => moveFilm(idx, 'up')} 
+                                        disabled={idx === 0} 
+                                        className="p-1 hover:bg-bauhaus-yellow disabled:opacity-30 border border-transparent hover:border-black transition-colors"
+                                    >
+                                        <ChevronUp size={16} />
+                                    </button>
+                                    <button 
+                                        onClick={() => moveFilm(idx, 'down')} 
+                                        disabled={idx === orderedFilms.length - 1} 
+                                        className="p-1 hover:bg-bauhaus-yellow disabled:opacity-30 border border-transparent hover:border-black transition-colors"
+                                    >
+                                        <ChevronDown size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <button 
+                        onClick={() => setIsReordering(false)} 
+                        className="mt-6 w-full bg-bauhaus-black text-white font-black uppercase py-3 hover:bg-bauhaus-red transition-colors shadow-hard-sm hover:shadow-hard-md"
+                    >
+                        Done
+                    </button>
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
