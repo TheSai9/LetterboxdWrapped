@@ -13,6 +13,8 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
 *   **🏆 Favorites & Rewatches**: Highlights your highest-rated films, rewatch statistics, and "new vs. old" discovery rates.
 *   **🎬 A-List Insights**: (Powered by TMDB) Identifies your most-watched actors, directors, and genres through background data enrichment.
 *   **🤖 AI Persona**: Generates a witty, personalized "Cinema Persona" based on your specific stats (e.g., "The Dedicated Cinephile").
+*   **📇 Share & Export**: Generate a sleek, shareable summary card in Mobile (9:16) or Wide (4:3) formats. Download it directly to share on social media.
+*   **✏️ Curator Mode**: Customize your summary card by manually reordering your Top 5 films or searching your history to replace entries with a dropdown menu.
 *   **🎨 Bauhaus Design**: A strict, high-contrast design system using primary colors (Red, Blue, Yellow) and geometric layouts.
 *   **🖱️ Interactive Drill-downs**: Click on chart bars, heatmap squares, or stats to reveal a dropdown list of specific movies associated with that data point.
 
@@ -26,6 +28,10 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
 |:---:|:---:|
 | <img width="1356" height="698" alt="Screenshot 2025-12-28 103145" src="https://github.com/user-attachments/assets/c7043ab8-2790-4cbe-b003-d266b1eed9fe" /> | <img width="1361" height="649" alt="Screenshot 2025-12-28 103103" src="https://github.com/user-attachments/assets/d8d68e20-3451-47c9-beb3-3e0b87c7b969" /> |
 
+| Cinema Persona | Share Card (Curator Mode) |
+|:---:|:---:|
+| <!-- Add Persona Screenshot Here --> | <!-- Add Share Card Screenshot Here --> |
+
 ## 🛠️ Tech Stack
 
 *   **Frontend**: React, TypeScript, Vite
@@ -34,6 +40,7 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
 *   **Data Parsing**: Custom CSV Parser (Client-side)
 *   **Enrichment API**: The Movie Database (TMDB)
 *   **AI Generation**: Google Gemini API
+*   **Image Generation**: html-to-image
 
 ## 🚀 Setup Instructions
 
