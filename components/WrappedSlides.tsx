@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProcessedStats, PersonaResult, SimpleMovie, EnrichedItem, RatingEntry } from '../types';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip, Cell, LabelList } from 'recharts';
 import { generatePersona } from '../services/geminiService';
 import { getMoviePoster, streamEnrichedData, EnrichedDataUpdate } from '../services/tmdbService';
-import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database, ChevronDown, Share2, Download, QrCode, Smartphone, Monitor, ListOrdered, ChevronUp } from 'lucide-react';
+import { ChevronRight, ChevronLeft, RotateCcw, Flame, Trophy, Clock, Star, Film, Users, Clapperboard, Hash, Loader2, Database, ChevronDown, Share2, Download, QrCode, Smartphone, Monitor, ListOrdered, ChevronUp, RefreshCw, Search, X } from 'lucide-react';
 import CalendarHeatmap from './CalendarHeatmap';
 import MovieListPanel from './MovieListPanel';
 import { toPng } from 'html-to-image';
@@ -651,6 +651,8 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
   // Reordering Logic
   const [orderedFilms, setOrderedFilms] = useState<RatingEntry[]>(() => stats.topRatedFilms);
   const [isReordering, setIsReordering] = useState(false);
+  const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
       setOrderedFilms(stats.topRatedFilms);
@@ -682,6 +684,35 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
       }
       setOrderedFilms(newFilms);
   };
+
+  const handleReplace = (index: number) => {
+    setReplacingIndex(index);
+    setSearchQuery("");
+  };
+
+  const selectReplacement = (movie: SimpleMovie) => {
+    if (replacingIndex === null) return;
+    
+    // Convert SimpleMovie to RatingEntry structure
+    const newFilm: RatingEntry = {
+        Name: movie.title,
+        Year: movie.year,
+        Rating: movie.rating || "0",
+        Date: "", // Placeholder, not used in card
+        "Letterboxd URI": "" // Placeholder
+    };
+    
+    const newFilms = [...orderedFilms];
+    newFilms[replacingIndex] = newFilm;
+    setOrderedFilms(newFilms);
+    setReplacingIndex(null);
+  };
+
+  const filteredMovies = useMemo(() => {
+    if (!searchQuery) return [];
+    const query = searchQuery.toLowerCase();
+    return stats.allFilms.filter(film => film.title.toLowerCase().includes(query)).slice(0, 50);
+  }, [searchQuery, stats.allFilms]);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -985,45 +1016,104 @@ const SlideShare = React.memo(({ stats, persona, enrichedData }: { stats: Proces
                     exit={{ opacity: 0, scale: 0.9 }}
                     className="bg-white border-4 border-bauhaus-black p-6 w-full max-w-md shadow-hard-lg max-h-[80vh] flex flex-col"
                 >
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-2xl font-black uppercase">Reorder Top Films</h3>
-                        <div className="text-xs font-bold text-gray-500 uppercase">Top 5 will be displayed</div>
-                    </div>
-                    
-                    <div className="space-y-2 overflow-y-auto custom-scrollbar flex-1 pr-2">
-                        {orderedFilms.map((film, idx) => (
-                            <div key={`${film.Name}-${idx}`} className={`flex items-center justify-between border-2 p-2 ${idx < 5 ? 'border-bauhaus-black bg-white' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className={`font-black text-sm w-6 h-6 flex items-center justify-center shrink-0 ${idx < 5 ? 'bg-bauhaus-yellow border border-black' : 'bg-gray-200'}`}>
-                                        {idx + 1}
-                                    </div>
-                                    <span className="font-bold truncate text-sm">{film.Name}</span>
-                                </div>
-                                <div className="flex gap-1 shrink-0">
-                                    <button 
-                                        onClick={() => moveFilm(idx, 'up')} 
-                                        disabled={idx === 0} 
-                                        className="p-1 hover:bg-bauhaus-yellow disabled:opacity-30 border border-transparent hover:border-black transition-colors"
-                                    >
-                                        <ChevronUp size={16} />
-                                    </button>
-                                    <button 
-                                        onClick={() => moveFilm(idx, 'down')} 
-                                        disabled={idx === orderedFilms.length - 1} 
-                                        className="p-1 hover:bg-bauhaus-yellow disabled:opacity-30 border border-transparent hover:border-black transition-colors"
-                                    >
-                                        <ChevronDown size={16} />
-                                    </button>
-                                </div>
+                    {replacingIndex === null ? (
+                        <>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-2xl font-black uppercase">Reorder Top Films</h3>
+                                <div className="text-xs font-bold text-gray-500 uppercase">Top 5 will be displayed</div>
                             </div>
-                        ))}
-                    </div>
-                    <button 
-                        onClick={() => setIsReordering(false)} 
-                        className="mt-6 w-full bg-bauhaus-black text-white font-black uppercase py-3 hover:bg-bauhaus-red transition-colors shadow-hard-sm hover:shadow-hard-md"
-                    >
-                        Done
-                    </button>
+                            
+                            <div className="space-y-2 overflow-y-auto custom-scrollbar flex-1 pr-2">
+                                {orderedFilms.map((film, idx) => (
+                                    <div key={`${film.Name}-${idx}`} className={`flex items-center justify-between border-2 p-2 ${idx < 5 ? 'border-bauhaus-black bg-white' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className={`font-black text-sm w-6 h-6 flex items-center justify-center shrink-0 ${idx < 5 ? 'bg-bauhaus-yellow border border-black' : 'bg-gray-200'}`}>
+                                                {idx + 1}
+                                            </div>
+                                            <span className="font-bold truncate text-sm">{film.Name}</span>
+                                        </div>
+                                        <div className="flex gap-1 shrink-0">
+                                            <button 
+                                                onClick={() => handleReplace(idx)} 
+                                                title="Replace film"
+                                                className="p-1 hover:bg-bauhaus-blue hover:text-white border border-transparent hover:border-black transition-colors"
+                                            >
+                                                <RefreshCw size={16} />
+                                            </button>
+                                            <div className="w-[1px] h-4 bg-gray-300 mx-1 self-center"></div>
+                                            <button 
+                                                onClick={() => moveFilm(idx, 'up')} 
+                                                disabled={idx === 0} 
+                                                className="p-1 hover:bg-bauhaus-yellow disabled:opacity-30 border border-transparent hover:border-black transition-colors"
+                                            >
+                                                <ChevronUp size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => moveFilm(idx, 'down')} 
+                                                disabled={idx === orderedFilms.length - 1} 
+                                                className="p-1 hover:bg-bauhaus-yellow disabled:opacity-30 border border-transparent hover:border-black transition-colors"
+                                            >
+                                                <ChevronDown size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <button 
+                                onClick={() => setIsReordering(false)} 
+                                className="mt-6 w-full bg-bauhaus-black text-white font-black uppercase py-3 hover:bg-bauhaus-red transition-colors shadow-hard-sm hover:shadow-hard-md"
+                            >
+                                Done
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                             <div className="flex justify-between items-center mb-4 border-b-2 border-bauhaus-black pb-2">
+                                <h3 className="text-xl font-black uppercase">Replace Film #{replacingIndex + 1}</h3>
+                                <button onClick={() => setReplacingIndex(null)} className="hover:bg-gray-200 p-1 rounded-full"><X size={20}/></button>
+                            </div>
+                            
+                            <div className="relative mb-4">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input 
+                                    type="text" 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search your history..."
+                                    className="w-full pl-10 pr-4 py-3 border-2 border-bauhaus-black font-bold focus:outline-none focus:ring-2 focus:ring-bauhaus-yellow"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto custom-scrollbar border-2 border-gray-200 p-1">
+                                {filteredMovies.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-400 font-bold uppercase text-sm">
+                                        {searchQuery ? "No matching films found" : "Type to search..."}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1">
+                                        {filteredMovies.map((movie, idx) => (
+                                            <button
+                                                key={`${movie.title}-${movie.year}-${idx}`}
+                                                onClick={() => selectReplacement(movie)}
+                                                className="w-full flex items-center justify-between p-3 hover:bg-bauhaus-yellow border-2 border-transparent hover:border-bauhaus-black transition-all text-left group"
+                                            >
+                                                <div>
+                                                    <div className="font-bold text-sm uppercase">{movie.title}</div>
+                                                    <div className="text-xs text-gray-500 group-hover:text-black font-semibold">{movie.year}</div>
+                                                </div>
+                                                {movie.rating && (
+                                                    <div className="flex items-center gap-1 text-xs font-black bg-bauhaus-black text-white px-2 py-0.5 group-hover:bg-white group-hover:text-black">
+                                                        <Star size={8} fill="currentColor" /> {movie.rating}
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </motion.div>
             </div>
         )}
