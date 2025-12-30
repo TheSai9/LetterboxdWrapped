@@ -97,7 +97,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-bauhaus-bg text-bauhaus-fg relative overflow-hidden">
+    <div className="min-h-screen flex flex-col md:flex-row bg-bauhaus-bg text-bauhaus-fg relative md:overflow-hidden">
       
       {/* Left Panel: Geometric Composition & Desktop Configuration */}
       <div className="hidden md:flex w-1/3 bg-bauhaus-blue border-r-4 border-bauhaus-black flex-col p-12 relative overflow-hidden">
@@ -111,9 +111,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
           <div className="text-8xl font-black text-white leading-none tracking-tighter drop-shadow-[4px_4px_0px_black] mb-8">
             CINE
             <br />
-            WRAP
-            <br />
-            PED
+            WRAPPED
           </div>
           <div className="text-white font-bold text-xl uppercase tracking-widest border-l-4 border-white pl-4">
             Letterboxd<br/>Year in Review
@@ -162,7 +160,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
       </div>
 
       {/* Right Panel: Content */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8 md:p-16 relative overflow-y-auto">
+      <div className="flex-1 flex flex-col justify-start md:justify-center items-center p-8 md:p-16 relative md:overflow-y-auto">
          {/* Mobile Header */}
          <div className="md:hidden w-full mb-8 border-b-4 border-bauhaus-black pb-8 shrink-0">
             <h1 className="text-6xl font-black text-bauhaus-fg tracking-tighter">CINE<br/>WRAPPED</h1>
