@@ -1,7 +1,7 @@
 
 import { DiaryEntry, RatingEntry, ProcessedStats, DailyEntryDetail, SimpleMovie } from '../types';
 
-export const processData = (diary: DiaryEntry[], ratings: RatingEntry[], options?: { onlyReleasedInWatchedYear: boolean }): ProcessedStats | null => {
+export const processData = (diary: DiaryEntry[], ratings: RatingEntry[], options?: { onlyReleasedInWatchedYear: boolean; year?: number }): ProcessedStats | null => {
   if (diary.length === 0) return null;
 
   // Filter for the most recent complete year present in the data or the current year
@@ -11,12 +11,17 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[], options
       return (isNaN(dateB.getTime()) ? 0 : dateB.getTime()) - (isNaN(dateA.getTime()) ? 0 : dateA.getTime());
   });
   
-  // Find first valid date
-  const latestEntry = sortedDiary.find(d => !isNaN(new Date(d["Watched Date"]).getTime()));
-  if (!latestEntry) return null;
+  let targetYear: number;
 
-  const latestDate = new Date(latestEntry["Watched Date"]);
-  const targetYear = latestDate.getFullYear();
+  if (options?.year) {
+    targetYear = options.year;
+  } else {
+    // Find first valid date for auto-detection
+    const latestEntry = sortedDiary.find(d => !isNaN(new Date(d["Watched Date"]).getTime()));
+    if (!latestEntry) return null;
+    const latestDate = new Date(latestEntry["Watched Date"]);
+    targetYear = latestDate.getFullYear();
+  }
 
   let yearDiary = sortedDiary.filter(d => d["Watched Date"].startsWith(targetYear.toString()));
 
