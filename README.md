@@ -15,10 +15,16 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
 *   **🤖 AI Persona**: Generates a witty, personalized "Cinema Persona" based on your specific stats (e.g., "The Dedicated Cinephile").
 *   **📇 Share & Export**: Generate a sleek, shareable summary card in Mobile (9:16) or Wide (4:3) formats. Download it directly to share on social media.
 *   **✏️ Curator Mode**: Customize your summary card by manually reordering your Top 5 films or searching your history to replace entries with a dropdown menu.
+*   **⚙️ Smart Configuration**: Auto-detects the most recent year in your logs. Includes a **Strict Mode** to filter analysis only for movies released in that specific year (perfect for "Best of 2024" lists).
 *   **🎨 Bauhaus Design**: A strict, high-contrast design system using primary colors (Red, Blue, Yellow) and geometric layouts.
 *   **🖱️ Interactive Drill-downs**: Click on chart bars, heatmap squares, or stats to reveal a dropdown list of specific movies associated with that data point.
 
 ## 📸 Visuals
+
+### File Upload & Configuration
+<img width="1577" height="737" alt="image" src="https://github.com/user-attachments/assets/102a10af-82ac-483c-a85b-3d4a2ee360ef" />
+
+### Panels
 
 | Volume Analysis | Rhythm Heatmap |
 |:---:|:---:|
@@ -92,5 +98,6 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
 3.  **Upload Files**:
     *   Select `diary.csv` for the main log.
     *   (Optional) Select `ratings.csv` for deeper rating analysis.
+    *   Use the configuration panel to select a specific year or enable **Strict Mode**.
 4.  **Enjoy**:
     *   Click "Construct Analysis" and navigate through your year in review using the arrows or keyboard.
