@@ -22,15 +22,19 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
 
 | Volume Analysis | Rhythm Heatmap |
 |:---:|:---:|
-| <img width="1317" height="676" alt="Screenshot 2025-12-28 102937" src="https://github.com/user-attachments/assets/dd589eab-7b26-4c4b-ac16-fb0a87ed57e2" /> | <img width="1225" height="691" alt="Screenshot 2025-12-28 103024" src="https://github.com/user-attachments/assets/75ef1262-9bc3-4524-afba-d78d3fe62d60" /> |
+| <img width="884" height="614" alt="image" src="https://github.com/user-attachments/assets/efb8d480-f31e-475d-b3d5-746bdb5735fe" /> | <img width="772" height="693" alt="image" src="https://github.com/user-attachments/assets/9f857f91-b8cb-4d2d-a60b-3b25ddae7694" /> |
 
 | A-List Cast & Crew | Favourite Films |
 |:---:|:---:|
 | <img width="1356" height="698" alt="Screenshot 2025-12-28 103145" src="https://github.com/user-attachments/assets/c7043ab8-2790-4cbe-b003-d266b1eed9fe" /> | <img width="1361" height="649" alt="Screenshot 2025-12-28 103103" src="https://github.com/user-attachments/assets/d8d68e20-3451-47c9-beb3-3e0b87c7b969" /> |
 
-| Cinema Persona | Share Card (Curator Mode) |
+| Cinema Persona | Critical Analysis |
 |:---:|:---:|
-| <!-- Add Persona Screenshot Here --> | <!-- Add Share Card Screenshot Here --> |
+| <img width="698" height="579" alt="image" src="https://github.com/user-attachments/assets/d4a90dd6-242e-4843-a071-246020426850" /> | <img width="771" height="641" alt="image" src="https://github.com/user-attachments/assets/c363d5ae-fcd3-4d0b-85b9-30a43be4386d" /> |
+
+| Share Card (9:16) | Share Card (4:3) |
+|:---:|:---:|
+| <img width="452" height="707" alt="image" src="https://github.com/user-attachments/assets/e329f4b8-9290-4d31-9a1a-89849273110a" /> | <img width="782" height="716" alt="image" src="https://github.com/user-attachments/assets/9c4dfaf4-679c-41e0-9454-ff0feb623753" /> |
 
 ## 🛠️ Tech Stack
 
@@ -38,7 +42,7 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
 *   **Styling**: Tailwind CSS, Framer Motion (for animations)
 *   **Charts**: Recharts
 *   **Data Parsing**: Custom CSV Parser (Client-side)
-*   **Enrichment API**: The Movie Database (TMDB)
+*   **Poster/Movie Data API**: The Movie Database (TMDB)
 *   **AI Generation**: Google Gemini API
 *   **Image Generation**: html-to-image
 
@@ -90,7 +94,3 @@ A cinematic, data-driven storytelling experience that visualizes your Letterboxd
     *   (Optional) Select `ratings.csv` for deeper rating analysis.
 4.  **Enjoy**:
     *   Click "Construct Analysis" and navigate through your year in review using the arrows or keyboard.
-
-## 📄 License
-
-MIT

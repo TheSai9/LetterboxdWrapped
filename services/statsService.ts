@@ -1,7 +1,7 @@
 
 import { DiaryEntry, RatingEntry, ProcessedStats, DailyEntryDetail, SimpleMovie } from '../types';
 
-export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): ProcessedStats | null => {
+export const processData = (diary: DiaryEntry[], ratings: RatingEntry[], options?: { onlyReleasedInWatchedYear: boolean }): ProcessedStats | null => {
   if (diary.length === 0) return null;
 
   // Filter for the most recent complete year present in the data or the current year
@@ -18,7 +18,12 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
   const latestDate = new Date(latestEntry["Watched Date"]);
   const targetYear = latestDate.getFullYear();
 
-  const yearDiary = sortedDiary.filter(d => d["Watched Date"].startsWith(targetYear.toString()));
+  let yearDiary = sortedDiary.filter(d => d["Watched Date"].startsWith(targetYear.toString()));
+
+  // Filter by Release Year if option is enabled
+  if (options?.onlyReleasedInWatchedYear) {
+      yearDiary = yearDiary.filter(d => d.Year === targetYear.toString());
+  }
   
   if (yearDiary.length === 0) return null;
 
@@ -186,7 +191,12 @@ export const processData = (diary: DiaryEntry[], ratings: RatingEntry[]): Proces
      }));
   }
 
-  const yearRatings = sourceRatings.filter(r => r.Date.startsWith(targetYear.toString()));
+  let yearRatings = sourceRatings.filter(r => r.Date.startsWith(targetYear.toString()));
+  
+  // Filter ratings by Release Year if option is enabled
+  if (options?.onlyReleasedInWatchedYear) {
+      yearRatings = yearRatings.filter(r => r.Year === targetYear.toString());
+  }
   
   let ratingSum = 0;
   const ratingData: Record<string, { count: number; movies: SimpleMovie[] }> = {};

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { CheckCircle, AlertCircle, Square, Circle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Square, Circle, Check } from 'lucide-react';
 import { parseCSV } from '../services/csvParser';
 import { processData } from '../services/statsService';
 import { DiaryEntry, RatingEntry, ProcessedStats } from '../types';
@@ -13,6 +13,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
   const [diaryData, setDiaryData] = useState<DiaryEntry[]>([]);
   const [ratingsData, setRatingsData] = useState<RatingEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [limitToReleaseYear, setLimitToReleaseYear] = useState(false);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'diary' | 'ratings') => {
     const file = e.target.files?.[0];
@@ -53,9 +54,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
 
     try {
         // 1. Basic Processing only
-        const basicStats = processData(diaryData, ratingsData);
+        const basicStats = processData(diaryData, ratingsData, { onlyReleasedInWatchedYear: limitToReleaseYear });
         if (!basicStats) {
-            throw new Error("Could not process stats. Check your data.");
+            throw new Error("Could not process stats. Check your data or adjust filters.");
         }
 
         // 2. Immediately pass data to parent. Enrichment happens in background.
@@ -142,6 +143,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
                       </div>
                     </label>
                  </div>
+              </div>
+
+              {/* Toggle Filter */}
+              <div 
+                  className="flex items-center gap-4 bg-white border-2 border-bauhaus-black p-4 shadow-hard-sm cursor-pointer hover:bg-gray-50 transition-colors select-none"
+                  onClick={() => setLimitToReleaseYear(!limitToReleaseYear)}
+              >
+                  <div className={`w-6 h-6 border-2 border-bauhaus-black flex items-center justify-center transition-colors shrink-0 ${limitToReleaseYear ? 'bg-bauhaus-yellow' : 'bg-white'}`}>
+                      {limitToReleaseYear && <Check size={16} strokeWidth={3} />}
+                  </div>
+                  <span className="font-bold uppercase text-sm leading-tight">Only include movies released in the analyzed year</span>
               </div>
 
             </div>
